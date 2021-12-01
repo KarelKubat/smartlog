@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 
 	"smartlog/client"
 	"smartlog/linebuf"
@@ -88,7 +89,7 @@ func (s *Server) udpServe() {
 			}
 			line.Add(buf, n)
 			for line.Complete() {
-				s.Fanout(line.Statement())
+				s.fanout(line.Statement())
 			}
 		}
 	}
@@ -110,7 +111,7 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 	var err error
 	defer func() {
 		for line.Complete() {
-			s.Fanout(line.Statement())
+			s.fanout(line.Statement())
 		}
 		if err != nil && err.Error() != "EOF" {
 			client.Warnf("error while handling TCP connection from %v: %v", conn.RemoteAddr(), err)
@@ -124,7 +125,7 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 		if n > 0 {
 			line.Add(buf, n)
 			for line.Complete() {
-				s.Fanout(line.Statement())
+				s.fanout(line.Statement())
 			}
 		}
 		if err != nil {
@@ -133,17 +134,16 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 	}
 }
 
-func (s *Server) Fanout(buf []byte) {
-	done := make(chan struct{})
-	go s.fanoutWorker(buf, done)
-	<-done
-}
-
-func (s *Server) fanoutWorker(buf []byte, done chan<- struct{}) {
+func (s *Server) fanout(buf []byte) {
+	var wg sync.WaitGroup
 	for _, c := range s.clients {
-		if err := c.Passthru(buf); err != nil {
-			client.Warnf("error while fanning out to client %v: %v, buf %v", c, err, string(buf))
-		}
+		wg.Add(1)
+		go func(buf []byte) {
+			if err := c.Passthru(buf); err != nil {
+				client.Warnf("error while fanning out to client %v: %v, buf %v", c, err, string(buf))
+			}
+			wg.Done()
+		}(buf)
 	}
-	done <- struct{}{}
+	wg.Wait()
 }
