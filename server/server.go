@@ -11,9 +11,14 @@ import (
 	"smartlog/uri"
 )
 
+const (
+	chSize = 1024 // # of messages that may be buffered while fanning out
+)
+
 type Server struct {
 	serverType  Type             // tcp or udp
 	clients     []*client.Client // clients to fan out to
+	bufCh       chan []byte      // msg channel for fanout to clients
 	tcpListener net.Listener     // in the case of a TCP server
 	udpConn     *net.UDPConn     // in the case of a UDP server
 
@@ -32,7 +37,9 @@ func New(u string) (*Server, error) {
 		return nil, err
 	}
 
-	s := &Server{}
+	s := &Server{
+		bufCh: make(chan []byte, chSize),
+	}
 
 	// Set the connection
 	switch ur.Scheme {
@@ -61,6 +68,10 @@ func (s *Server) AddClient(c *client.Client) {
 }
 
 func (s *Server) Serve() error {
+	go func() {
+		s.fanout()
+	}()
+
 	switch s.serverType {
 	case tcp:
 		s.tcpServe()
@@ -89,7 +100,7 @@ func (s *Server) udpServe() {
 			}
 			line.Add(buf, n)
 			for line.Complete() {
-				s.fanout(line.Statement())
+				s.bufCh <- line.Statement()
 			}
 		}
 	}
@@ -111,7 +122,7 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 	var err error
 	defer func() {
 		for line.Complete() {
-			s.fanout(line.Statement())
+			s.bufCh <- line.Statement()
 		}
 		if err != nil && err.Error() != "EOF" {
 			client.Warnf("error while handling TCP connection from %v: %v", conn.RemoteAddr(), err)
@@ -125,7 +136,7 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 		if n > 0 {
 			line.Add(buf, n)
 			for line.Complete() {
-				s.fanout(line.Statement())
+				s.bufCh <- line.Statement()
 			}
 		}
 		if err != nil {
@@ -134,16 +145,20 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 	}
 }
 
-func (s *Server) fanout(buf []byte) {
-	var wg sync.WaitGroup
-	for _, c := range s.clients {
-		wg.Add(1)
-		go func(buf []byte) {
-			if err := c.Passthru(buf); err != nil {
-				client.Warnf("error while fanning out to client %v: %v, buf %v", c, err, string(buf))
-			}
-			wg.Done()
-		}(buf)
+func (s *Server) fanout() {
+	// fanout() never returns, but forever consumes messages from the bufCh
+	for {
+		buf := <-s.bufCh
+		var wg sync.WaitGroup
+		for _, c := range s.clients {
+			wg.Add(1)
+			go func(buf []byte) {
+				if err := c.Passthru(buf); err != nil {
+					client.Warnf("error while fanning out to client %v: %v, buf %v", c, err, string(buf))
+				}
+				wg.Done()
+			}(buf)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 }
