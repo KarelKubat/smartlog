@@ -96,17 +96,16 @@ func (c *Client) timeStamp() []byte {
 }
 
 func (c *Client) sendToWriter(lev byte, msg string) error {
-	if _, err := c.Writer.Write(c.timeStamp()); err != nil {
-		return err
-	}
-	if _, err := c.Writer.Write([]byte{space, separator, space, lev, space, separator, space}); err != nil {
-		return err
-	}
-	if !strings.HasSuffix(msg, "\n") {
-		msg += "\n"
-	}
-	if _, err := c.Writer.Write([]byte(msg)); err != nil {
-		return err
+	prefix := append(c.timeStamp(), space, separator, space, lev, space, separator, space)
+
+	for _, line := range strings.Split(msg, "\n") {
+		if line == "" {
+			continue
+		}
+		out := append(append(prefix, []byte(line)...), '\n')
+		if _, err := c.Writer.Write(out); err != nil {
+			return err
+		}
 	}
 	return nil
 }
