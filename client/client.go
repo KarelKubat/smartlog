@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-type ClientType int
+type clientType int
 
 const (
-	Std ClientType = iota
+	Std clientType = iota
 	File
 	Network
 )
 
-func (t ClientType) String() string {
+func (t clientType) String() string {
 	return []string{"std://", "file://", "udp:// or tcp://"}[t]
 }
 
@@ -33,7 +33,7 @@ const (
 
 type Client struct {
 	// Present in all loggers
-	Type       ClientType // std, file, network
+	Type       clientType // std, file, network
 	TimeFormat string     // defaults to YYYY-MM-DD HH:MM:SS localtime
 	Writer     io.Writer  // writer for Info(f), Warn(f), Error(f)
 
@@ -49,7 +49,7 @@ func (c *Client) String() string {
 }
 
 func (c *Client) Info(msg string) error {
-	return sendToWriter(c.Writer, c.timeStamp(), infoTag, msg)
+	return c.sendToWriter(infoTag, msg)
 }
 
 func (c *Client) Infof(format string, args ...interface{}) error {
@@ -58,7 +58,7 @@ func (c *Client) Infof(format string, args ...interface{}) error {
 }
 
 func (c *Client) Warn(msg string) error {
-	return sendToWriter(c.Writer, c.timeStamp(), warnTag, msg)
+	return c.sendToWriter(warnTag, msg)
 }
 
 func (c *Client) Warnf(format string, args ...interface{}) error {
@@ -67,7 +67,7 @@ func (c *Client) Warnf(format string, args ...interface{}) error {
 }
 
 func (c *Client) Error(msg string) error {
-	if err := sendToWriter(c.Writer, c.timeStamp(), errorTag, msg); err != nil {
+	if err := c.sendToWriter(errorTag, msg); err != nil {
 		return err
 	}
 	os.Exit(1)
@@ -95,17 +95,17 @@ func (c *Client) timeStamp() []byte {
 	return []byte(stamp)
 }
 
-func sendToWriter(wr io.Writer, stamp []byte, lev byte, msg string) error {
-	if _, err := wr.Write(stamp); err != nil {
+func (c *Client) sendToWriter(lev byte, msg string) error {
+	if _, err := c.Writer.Write(c.timeStamp()); err != nil {
 		return err
 	}
-	if _, err := wr.Write([]byte{space, separator, space, lev, space, separator, space}); err != nil {
+	if _, err := c.Writer.Write([]byte{space, separator, space, lev, space, separator, space}); err != nil {
 		return err
 	}
 	if !strings.HasSuffix(msg, "\n") {
 		msg += "\n"
 	}
-	if _, err := wr.Write([]byte(msg)); err != nil {
+	if _, err := c.Writer.Write([]byte(msg)); err != nil {
 		return err
 	}
 	return nil
