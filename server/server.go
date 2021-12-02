@@ -86,11 +86,12 @@ func (s *Server) Serve() error {
 func (s *Server) Close() error {
 	var err error
 	switch s.URI.Scheme {
-	case URI.TCP:
+	case uri.TCP:
 		err = s.tcpListener.Close()
-	case URI.UDP:
+	case uri.UDP:
 		err = s.udpConn.Close()
 	}
+	return err
 }
 
 func (s *Server) udpServe() {
