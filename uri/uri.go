@@ -10,13 +10,14 @@ import (
 type URISchema int
 
 const (
-	File URISchema = iota
+	None URISchema = iota
+	File
 	UDP
 	TCP
 )
 
 func (u URISchema) String() string {
-	return []string{"file", "udp", "tcp"}[u]
+	return []string{"none", "file", "udp", "tcp"}[u]
 }
 
 type URI struct {

@@ -96,6 +96,10 @@ func (c *Client) timeStamp() []byte {
 }
 
 func (c *Client) sendToWriter(lev byte, msg string) error {
+	if c.URI.Scheme == uri.None {
+		return nil
+	}
+
 	// prefix for each line
 	prefix := append(c.timeStamp(), space, separator, space, lev, space, separator, space)
 
