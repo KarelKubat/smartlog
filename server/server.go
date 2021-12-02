@@ -83,6 +83,16 @@ func (s *Server) Serve() error {
 	return fmt.Errorf("%v: server stopped", s)
 }
 
+func (s *Server) Close() error {
+	var err error
+	switch s.URI.Scheme {
+	case URI.TCP:
+		err = s.tcpListener.Close()
+	case URI.UDP:
+		err = s.udpConn.Close()
+	}
+}
+
 func (s *Server) udpServe() {
 	line := linebuf.New()
 
