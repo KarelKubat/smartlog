@@ -97,13 +97,16 @@ func (s *Server) Close() error {
 func (s *Server) udpServe() {
 	line := linebuf.New()
 
-	// Serve doesn't return
+	// Don't return unless the connection gets closed.
 	for {
 		for {
 			buf := make([]byte, 1024)
 			n, addr, err := s.udpConn.ReadFromUDP(buf)
 			if err != nil {
-				client.Warnf("%v: error while handling UDP connection from %v: %v", s, addr, err)
+				client.Warnf("%v: failed to handle UDP connection from %v: %v", s, addr, err)
+				if strings.Contains(err.Error(), "use of closed network connection") {
+					return
+				}
 				continue
 			}
 			if n == 0 {
@@ -118,10 +121,14 @@ func (s *Server) udpServe() {
 }
 
 func (s *Server) tcpServe() {
+	// Don't return unless the connection gets closed.
 	for {
 		conn, err := s.tcpListener.Accept()
 		if err != nil {
-			client.Warnf("%v: error accepting TCP connection: %v", s, err)
+			client.Warnf("%v: failed to accept TCP connection: %v", s, err)
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				return
+			}
 			continue
 		}
 		go s.handleTCPConnection(conn)
@@ -139,7 +146,7 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 			fmt.Println(err)
 		}
 		if err != nil && err.Error() != "EOF" {
-			client.Warnf("%v: error while handling TCP connection from %v: %v", s, conn.RemoteAddr(), err)
+			client.Warnf("%v: failed to handle TCP connection from %v: %v", s, conn.RemoteAddr(), err)
 		}
 		conn.Close()
 	}()
@@ -168,7 +175,7 @@ func (s *Server) fanout() {
 			wg.Add(1)
 			go func(c *client.Client, buf []byte) {
 				if err := c.Passthru(buf); err != nil {
-					client.Warnf("%v: error while fanning out to client %v: %v, buf %v", s, c, err, string(buf))
+					client.Warnf("%v: failed to fanout to client %v: %v, buf %v", s, c, err, string(buf))
 				}
 				wg.Done()
 			}(c, buf)
