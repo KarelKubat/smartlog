@@ -39,7 +39,7 @@ func main() {
 	c, err = any.New(os.Args[1])
 	if err != nil {
 		err = fmt.Errorf(
-			"%v\nmake sure to at least run `nc -ul $PORT` or `nc -tl $PORT` on the receiving host\n", err)
+			"%v\nwhen using a TCP or UDP client: make sure to at least run `nc -ul $PORT` or `nc -tl $PORT` on the receiving host\n", err)
 		return
 	}
 
