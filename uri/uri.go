@@ -37,6 +37,11 @@ func New(s string) (*URI, error) {
 		parts       int
 		description string
 	}{
+		"none": {
+			uriType:     None,
+			parts:       1,
+			description: "none://WHATEVER",
+		},
 		"file": {
 			uriType:     File,
 			parts:       1,
