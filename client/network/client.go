@@ -3,32 +3,22 @@ package network
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"smartlog/client"
+	"smartlog/uri"
 )
 
-func New(transport, hostname string, port int) (*client.Client, error) {
+func New(ur *uri.URI) (*client.Client, error) {
 	c := &client.Client{
-		Type:       client.Network,
+		URI:        ur,
 		TimeFormat: client.DefaultTimeFormat,
 	}
 	var err error
-	c.Conn, err = net.Dial(transport, fmt.Sprintf("%v:%v", hostname, port))
+	c.Conn, err = net.Dial(fmt.Sprintf("%v", ur.Scheme), strings.Join(ur.Parts, ":"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%v: failed to connect: %v", c, err)
 	}
 	c.Writer = c.Conn
 	return c, nil
-}
-
-func ToUDP(hostname string, port int) error {
-	var err error
-	client.DefaultClient, err = New("udp", hostname, port)
-	return err
-}
-
-func ToTCP(hostname string, port int) error {
-	var err error
-	client.DefaultClient, err = New("tcp", hostname, port)
-	return err
 }

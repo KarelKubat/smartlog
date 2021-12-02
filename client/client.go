@@ -7,19 +7,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"smartlog/uri"
 )
-
-type clientType int
-
-const (
-	Std clientType = iota
-	File
-	Network
-)
-
-func (t clientType) String() string {
-	return []string{"std://", "file://", "udp:// or tcp://"}[t]
-}
 
 const (
 	DefaultTimeFormat = "2006-01-02 15:04:05"
@@ -33,19 +23,16 @@ const (
 
 type Client struct {
 	// Present in all loggers
-	Type       clientType // std, file, network
-	TimeFormat string     // defaults to YYYY-MM-DD HH:MM:SS localtime
-	Writer     io.Writer  // writer for Info(f), Warn(f), Error(f)
-
-	// Present in file loggers
-	Filename string
+	TimeFormat string    // defaults to YYYY-MM-DD HH:MM:SS localtime
+	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)
+	URI        *uri.URI  // URI from which the client was constructed
 
 	// Present in network loggers
 	Conn net.Conn
 }
 
 func (c *Client) String() string {
-	return fmt.Sprintf("%v...", c.Type)
+	return fmt.Sprintf("%v", c.URI)
 }
 
 func (c *Client) Info(msg string) error {
@@ -104,7 +91,7 @@ func (c *Client) sendToWriter(lev byte, msg string) error {
 		}
 		out := append(append(prefix, []byte(line)...), '\n')
 		if _, err := c.Writer.Write(out); err != nil {
-			return err
+			return fmt.Errorf("write failure to %v: %v", c, err)
 		}
 	}
 	return nil

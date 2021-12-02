@@ -26,33 +26,29 @@ type URI struct {
 
 func New(s string) (*URI, error) {
 	uri := &URI{}
-	// SCHEME://part1:part2:part3:etc
+	// SCHEME://part1:part2:part3:etc, though beyond SCHEME:// we only suport 1 or 2 parts
 	top := strings.Split(s, "://")
 	if len(top) != 2 {
-		return nil, Error(s, "expected: scheme://rest")
+		return nil, fmt.Errorf("%v: expected: scheme://rest", s)
 	}
 	schemeMap := map[string]struct {
 		uriType     URISchema
-		minParts    int
-		maxParts    int
+		parts       int
 		description string
 	}{
 		"file": {
 			uriType:     File,
-			minParts:    1,
-			maxParts:    3,
-			description: "file://FILENAME or file://FILENAME:truncate or file:://FILENAME:[truncate]:UMASK",
+			parts:       1,
+			description: "file://FILENAME",
 		},
 		"udp": {
 			uriType:     UDP,
-			minParts:    2,
-			maxParts:    2,
+			parts:       2,
 			description: "udp://SERVER:PORT",
 		},
 		"tcp": {
 			uriType:     TCP,
-			minParts:    2,
-			maxParts:    2,
+			parts:       2,
 			description: "tcp://SERVER:PORT",
 		},
 	}
@@ -65,30 +61,24 @@ func New(s string) (*URI, error) {
 			if supported != "" {
 				supported += ","
 			}
-			supported += key
+			supported += fmt.Sprintf("%s://...", key)
 		}
-		return nil, Errorf(s, "unsupported scheme %q, supported: %v", top[0], supported)
+		return nil, fmt.Errorf("%v: unsupported scheme %q, supported: %v", s, top[0], supported)
 	}
 	uri.Scheme = valid.uriType
 	uri.Parts = strings.Split(top[1], ":")
-	if len(uri.Parts) < valid.minParts || len(uri.Parts) > valid.maxParts {
-		return nil, Errorf(s, "it has %v colon-separated parts, supported: %v", len(uri.Parts), valid.description)
+	if len(uri.Parts) != valid.parts {
+		return nil, fmt.Errorf("%v: has %v colon-separated part(s), supported: %v", s, len(uri.Parts), valid.description)
+	}
+	if len(uri.Parts) > 1 {
+		_, err := strconv.Atoi(uri.Parts[1])
+		if err != nil {
+			return nil, fmt.Errorf("%v: port %q is not a number: %v", s, uri.Parts[1], err)
+		}
 	}
 	return uri, nil
 }
 
-func Error(uri, msg string) error {
-	return fmt.Errorf("invalid URI %q, %s", uri, msg)
-}
-
-func Errorf(uri, format string, args ...interface{}) error {
-	return Error(uri, fmt.Sprintf(format, args...))
-}
-
-func Port(u, p string) (int, error) {
-	port, err := strconv.Atoi(p)
-	if err != nil {
-		return 0, Errorf(u, "port %q is not a number: %v", p, err)
-	}
-	return port, nil
+func (u *URI) String() string {
+	return fmt.Sprintf("%v://%v", u.Scheme, strings.Join(u.Parts, ":"))
 }

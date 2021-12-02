@@ -1,41 +1,33 @@
 package file
 
 import (
-	"io/fs"
 	"os"
 
 	"smartlog/client"
+	"smartlog/uri"
 )
 
-type FileClientOpts struct {
-	Filename string
-	Truncate bool
-	UMask    fs.FileMode
-}
-
-func New(opts *FileClientOpts) (*client.Client, error) {
+func New(u *uri.URI) (*client.Client, error) {
 	c := &client.Client{
-		Type:       client.File,
+		URI:        u,
 		TimeFormat: client.DefaultTimeFormat,
-		Filename:   opts.Filename,
 	}
-	bitmask := os.O_CREATE | os.O_WRONLY
-	if opts.Truncate {
-		bitmask |= os.O_TRUNC
-	} else {
-		bitmask |= os.O_APPEND
-	}
-	umask := opts.UMask
-	if umask == 0 {
-		umask = 0644
+	if u.Parts[0] == "stdout" {
+		c.Writer = os.Stdout
+		return c, nil
 	}
 	var err error
-	c.Writer, err = os.OpenFile(opts.Filename, bitmask, umask)
+	c.Writer, err = os.OpenFile(u.Parts[0], os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	return c, err
 }
 
-func ToFile(opts *FileClientOpts) error {
-	var err error
-	client.DefaultClient, err = New(opts)
-	return err
+func init() {
+	client.DefaultClient = &client.Client{
+		TimeFormat: client.DefaultTimeFormat,
+		Writer:     os.Stdout,
+		URI: &uri.URI{
+			Scheme: uri.File,
+			Parts:  []string{"stdout"},
+		},
+	}
 }
