@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -21,12 +23,12 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 `
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "Supply 1 argument, e.g. `udp://SERVER:PORT` or `file://this.log`")
-		os.Exit(1)
-	}
+const usage = `
+Supply 1 argument: where to send to, e.g. udp://SERVER:PORT or file://this.log
+Use flag -n <nr> to control the number of sent messages.
+`
 
+func main() {
 	var err error
 	defer func() {
 		if err != nil {
@@ -35,8 +37,15 @@ func main() {
 		}
 	}()
 
+	nFlag := flag.Int("n", 100, "number of messages to send")
+	flag.Parse()
+	if flag.NArg() != 1 {
+		err = errors.New(usage)
+		return
+	}
+
 	var c *client.Client
-	c, err = any.New(os.Args[1])
+	c, err = any.New(flag.Arg(0))
 	if err != nil {
 		err = fmt.Errorf(
 			"%v\nwhen using a TCP or UDP client: make sure to at least run `nc -ul $PORT` or `nc -tl $PORT` on the receiving host\n", err)
@@ -44,15 +53,21 @@ func main() {
 	}
 
 	c.Info("------------- run start -------------")
-	for i := 1; i <= 10; i++ {
-		if err = c.Infof("informational message %d", i); err != nil {
+	nMessages := 1
+	for nMessages <= *nFlag {
+		if err = c.Infof("informational message %d", nMessages); err != nil {
 			return
 		}
-		if err = c.Warnf("warning message %d", i); err != nil {
+		nMessages++
+		if err = c.Warnf("warning message %d", nMessages); err != nil {
 			return
 		}
+		nMessages++
+		if err = c.Info(fmt.Sprintf("%v: %v", nMessages, lorem)); err != nil {
+			return
+		}
+		nMessages++
 	}
-	c.Info(lorem)
 	if err = c.Info("------------- run end -------------"); err != nil {
 		return
 	}
