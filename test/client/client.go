@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"smartlog/client"
 	"smartlog/client/any"
@@ -24,8 +25,12 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.
 `
 
 const usage = `
-Supply 1 argument: where to send to, e.g. udp://SERVER:PORT or file://this.log
-Use flag -n <nr> to control the number of sent messages.
+Usage: client [FLAGS] DEST
+DEST defines where to send to, e.g. udp://SERVER:PORT or file://this.log
+FLAGS may be:
+  -n NR : send at least NR messages
+  -v    : display what is being sent
+  -t    : show timing
 `
 
 func main() {
@@ -38,6 +43,8 @@ func main() {
 	}()
 
 	nFlag := flag.Int("n", 100, "number of messages to send")
+	vFlag := flag.Bool("v", false, "log locally what is being sent")
+	tFlag := flag.Bool("t", true, "show timing")
 	flag.Parse()
 	if flag.NArg() != 1 {
 		err = errors.New(usage)
@@ -52,23 +59,33 @@ func main() {
 		return
 	}
 
-	c.Info("------------- run start -------------")
-	nMessages := 1
-	for nMessages <= *nFlag {
-		if err = c.Infof("informational message %d", nMessages); err != nil {
-			return
+	nMessages := 0
+	sendf := func(f func(string, ...interface{}) error, msg string, args ...interface{}) error {
+		err := c.Infof(msg, args...)
+		if *vFlag {
+			client.Infof("sent: "+msg, args...)
 		}
 		nMessages++
-		if err = c.Warnf("warning message %d", nMessages); err != nil {
-			return
-		}
-		nMessages++
-		if err = c.Info(fmt.Sprintf("%v: %v", nMessages, lorem)); err != nil {
-			return
-		}
-		nMessages++
+		return err
 	}
-	if err = c.Info("------------- run end -------------"); err != nil {
+
+	start := time.Now()
+	sendf(c.Infof, "------------- run start -------------")
+	for nMessages <= *nFlag {
+		if err = sendf(c.Infof, "informational message %d", nMessages); err != nil {
+			return
+		}
+		if err = sendf(c.Warnf, "warning message %d", nMessages); err != nil {
+			return
+		}
+		if err = sendf(c.Infof, "%v: %v", nMessages, lorem); err != nil {
+			return
+		}
+	}
+	if err = sendf(c.Infof, "------------- run end -------------"); err != nil {
 		return
+	}
+	if *tFlag {
+		client.Infof("sent %v messages in %v", nMessages, time.Now().Sub(start))
 	}
 }
