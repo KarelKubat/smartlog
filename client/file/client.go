@@ -16,9 +16,10 @@ func New(u *uri.URI) (*client.Client, error) {
 		c.Writer = os.Stdout
 		return c, nil
 	}
-	var err error
-	c.Writer, err = os.OpenFile(u.Parts[0], os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	return c, err
+	if err := c.OpenFile(); err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 func init() {

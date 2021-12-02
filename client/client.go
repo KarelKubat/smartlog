@@ -27,8 +27,8 @@ type Client struct {
 	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)
 	URI        *uri.URI  // URI from which the client was constructed
 
-	// Present in network loggers
-	Conn net.Conn
+	Conn       net.Conn // Only in network loggers
+	IsTrueFile bool     // Only in file loggers
 }
 
 func (c *Client) String() string {
@@ -71,6 +71,19 @@ func (c *Client) Passthru(msg []byte) error {
 	return err
 }
 
+func (c *Client) OpenFile() error {
+	if c.URI.Scheme != uri.File || c.URI.Parts[0] == "stdout" {
+		return fmt.Errorf("%v: attempt to open a file but this URI is not file-based", c)
+	}
+	var err error
+	c.Writer, err = os.OpenFile(c.URI.Parts[0], os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("%v: failed to create file: %v", c, err)
+	}
+	c.IsTrueFile = true
+	return nil
+}
+
 func (c *Client) timeStamp() []byte {
 	now := time.Now()
 	var stamp string
@@ -83,6 +96,7 @@ func (c *Client) timeStamp() []byte {
 }
 
 func (c *Client) sendToWriter(lev byte, msg string) error {
+	// prefix for each line
 	prefix := append(c.timeStamp(), space, separator, space, lev, space, separator, space)
 
 	for _, line := range strings.Split(msg, "\n") {
@@ -94,5 +108,14 @@ func (c *Client) sendToWriter(lev byte, msg string) error {
 			return fmt.Errorf("write failure to %v: %v", c, err)
 		}
 	}
+
+	// If the file disappears, reopen it
+	if c.IsTrueFile {
+		_, err := os.Stat(c.URI.Parts[0])
+		if err != nil {
+			return c.OpenFile()
+		}
+	}
+
 	return nil
 }
