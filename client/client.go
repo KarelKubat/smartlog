@@ -67,6 +67,9 @@ func (c *Client) Errorf(format string, args ...interface{}) error {
 }
 
 func (c *Client) Passthru(msg []byte) error {
+	if c.URI.Scheme == uri.None {
+		return nil
+	}
 	_, err := c.Writer.Write(msg)
 	return err
 }
@@ -100,7 +103,7 @@ func (c *Client) sendToWriter(lev byte, msg string) error {
 		return nil
 	}
 
-	// prefix for each line
+	// Prefix for each line
 	prefix := append(c.timeStamp(), space, separator, space, lev, space, separator, space)
 
 	for _, line := range strings.Split(msg, "\n") {
@@ -109,7 +112,7 @@ func (c *Client) sendToWriter(lev byte, msg string) error {
 		}
 		out := append(append(prefix, []byte(line)...), '\n')
 		if _, err := c.Writer.Write(out); err != nil {
-			return fmt.Errorf("write failure to %v: %v", c, err)
+			return fmt.Errorf("%v: write failure: %v", c, err)
 		}
 	}
 
