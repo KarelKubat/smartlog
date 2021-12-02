@@ -152,12 +152,12 @@ func (s *Server) fanout() {
 		var wg sync.WaitGroup
 		for _, c := range s.clients {
 			wg.Add(1)
-			go func(buf []byte) {
+			go func(c *client.Client, buf []byte) {
 				if err := c.Passthru(buf); err != nil {
 					client.Warnf("error while fanning out to client %v: %v, buf %v", c, err, string(buf))
 				}
 				wg.Done()
-			}(buf)
+			}(c, buf)
 		}
 		wg.Wait()
 	}
