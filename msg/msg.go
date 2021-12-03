@@ -48,7 +48,7 @@ func BytesFromMessage(m *Message) [][]byte {
 		}
 		timestamp = []byte(time.Now().Format(timeFormat))
 	}
-	prefix := append(timestamp, space, separator, space, tagForType[m.Type], space)
+	prefix := append(timestamp, space, separator, space, tagForType[m.Type], space, separator, space)
 	out := [][]byte{}
 	for _, line := range strings.Split(m.Message, "\n") {
 		if line == "" {
