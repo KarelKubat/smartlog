@@ -9,8 +9,7 @@ import (
 
 func New(u *uri.URI) (*client.Client, error) {
 	c := &client.Client{
-		URI:        u,
-		TimeFormat: client.DefaultTimeFormat,
+		URI: u,
 	}
 	if u.Parts[0] == "stdout" {
 		c.Writer = os.Stdout
@@ -24,8 +23,7 @@ func New(u *uri.URI) (*client.Client, error) {
 
 func init() {
 	client.DefaultClient = &client.Client{
-		TimeFormat: client.DefaultTimeFormat,
-		Writer:     os.Stdout,
+		Writer: os.Stdout,
 		URI: &uri.URI{
 			Scheme: uri.File,
 			Parts:  []string{"stdout"},

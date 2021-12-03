@@ -11,8 +11,7 @@ import (
 
 func New(ur *uri.URI) (*client.Client, error) {
 	c := &client.Client{
-		URI:        ur,
-		TimeFormat: client.DefaultTimeFormat,
+		URI: ur,
 	}
 	var err error
 	c.Conn, err = net.Dial(fmt.Sprintf("%v", ur.Scheme), strings.Join(ur.Parts, ":"))

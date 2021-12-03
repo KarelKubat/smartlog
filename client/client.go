@@ -5,20 +5,10 @@ import (
 	"io"
 	"net"
 	"os"
-	"strings"
 	"time"
 
+	"smartlog/msg"
 	"smartlog/uri"
-)
-
-const (
-	DefaultTimeFormat = "2006-01-02 15:04:05"
-
-	infoTag   byte = 'I'
-	warnTag        = 'W'
-	errorTag       = 'E'
-	separator      = '|'
-	space          = ' '
 )
 
 type Client struct {
@@ -35,8 +25,8 @@ func (c *Client) String() string {
 	return fmt.Sprintf("%v", c.URI)
 }
 
-func (c *Client) Info(msg string) error {
-	return c.sendToWriter(infoTag, msg)
+func (c *Client) Info(message string) error {
+	return c.sendToWriter(msg.Info, message)
 }
 
 func (c *Client) Infof(format string, args ...interface{}) error {
@@ -44,8 +34,8 @@ func (c *Client) Infof(format string, args ...interface{}) error {
 	return c.Info(full)
 }
 
-func (c *Client) Warn(msg string) error {
-	return c.sendToWriter(warnTag, msg)
+func (c *Client) Warn(message string) error {
+	return c.sendToWriter(msg.Warn, message)
 }
 
 func (c *Client) Warnf(format string, args ...interface{}) error {
@@ -53,8 +43,8 @@ func (c *Client) Warnf(format string, args ...interface{}) error {
 	return c.Warn(full)
 }
 
-func (c *Client) Error(msg string) error {
-	if err := c.sendToWriter(errorTag, msg); err != nil {
+func (c *Client) Error(message string) error {
+	if err := c.sendToWriter(msg.Error, message); err != nil {
 		return err
 	}
 	os.Exit(1)
@@ -97,20 +87,17 @@ func (c *Client) timeStamp() []byte {
 	return []byte(stamp)
 }
 
-func (c *Client) sendToWriter(lev byte, msg string) error {
+func (c *Client) sendToWriter(lev msg.MsgType, message string) error {
 	if c.URI.Scheme == uri.None {
 		return nil
 	}
 
-	// Prefix for each line
-	prefix := append(c.timeStamp(), space, separator, space, lev, space, separator, space)
-
-	for _, line := range strings.Split(msg, "\n") {
-		if line == "" {
-			continue
-		}
-		out := append(append(prefix, []byte(line)...), '\n')
-		if err := c.write(out); err != nil {
+	for _, buf := range msg.BytesFromMessage(&msg.Message{
+		Type:       lev,
+		TimeFormat: c.TimeFormat,
+		Message:    message,
+	}) {
+		if err := c.write(buf); err != nil {
 			return err
 		}
 	}
