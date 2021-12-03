@@ -61,7 +61,7 @@ func main() {
 
 	nMessages := 0
 	sendf := func(f func(string, ...interface{}) error, msg string, args ...interface{}) error {
-		err := c.Infof(msg, args...)
+		err := f(msg, args...)
 		if *vFlag {
 			client.Infof("sent: "+msg, args...)
 		}
