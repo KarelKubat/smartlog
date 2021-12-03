@@ -66,12 +66,11 @@ func (c *Client) Errorf(format string, args ...interface{}) error {
 	return c.Error(full)
 }
 
-func (c *Client) Passthru(msg []byte) error {
+func (c *Client) Passthru(buf []byte) error {
 	if c.URI.Scheme == uri.None {
 		return nil
 	}
-	_, err := c.Writer.Write(msg)
-	return err
+	return c.write(buf)
 }
 
 func (c *Client) OpenFile() error {
@@ -111,8 +110,8 @@ func (c *Client) sendToWriter(lev byte, msg string) error {
 			continue
 		}
 		out := append(append(prefix, []byte(line)...), '\n')
-		if _, err := c.Writer.Write(out); err != nil {
-			return fmt.Errorf("%v: write failure: %v", c, err)
+		if err := c.write(out); err != nil {
+			return err
 		}
 	}
 
@@ -124,5 +123,17 @@ func (c *Client) sendToWriter(lev byte, msg string) error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Client) write(buf []byte) error {
+	nWritten := 0
+	for nWritten < len(buf) {
+		n, err := c.Writer.Write(buf)
+		if err != nil {
+			return fmt.Errorf("%v: write failure: %v", c, err)
+		}
+		nWritten += n
+	}
 	return nil
 }
