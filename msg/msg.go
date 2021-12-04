@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	DefaultTimeFormat = "2006-01-02 15:04:05"
-
 	debugTag   byte = 'D' // Tags for Debug(f) etc.
 	infoTag         = 'I'
 	warnTag         = 'W'
@@ -17,6 +15,11 @@ const (
 
 	separator = '|' // Message parts are separated by space, separator, space
 	space     = ' '
+)
+
+var (
+	DefaultTimeFormat = "2006-01-02 15:04:05 MST"
+	UTCTime           = false
 )
 
 type MsgType int
@@ -59,7 +62,11 @@ func BytesFromMessage(m *Message) [][]byte {
 		if timeFormat == "" {
 			timeFormat = DefaultTimeFormat
 		}
-		timestamp = []byte(time.Now().Format(timeFormat))
+		now := time.Now()
+		if UTCTime {
+			now = now.UTC()
+		}
+		timestamp = []byte(now.Format(timeFormat))
 	}
 	prefix := append(timestamp, space, separator, space, tagForType[m.Type], space, separator, space)
 	out := [][]byte{}

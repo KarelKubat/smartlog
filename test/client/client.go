@@ -9,6 +9,7 @@ import (
 
 	"smartlog/client"
 	"smartlog/client/any"
+	"smartlog/msg"
 )
 
 // Test msg containing newlines and empty lines
@@ -77,6 +78,9 @@ func main() {
 		nMessages++
 		return err
 	}
+
+	msg.DefaultTimeFormat = time.RFC3339 // format: "2006-01-02T15:04:05Z07:00"
+	msg.UTCTime = true                   // relative to UTC
 
 	start := time.Now()
 	sendf(c.Infof, "------------- run start -------------")
