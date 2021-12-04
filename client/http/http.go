@@ -8,9 +8,7 @@ import (
 	"smartlog/uri"
 )
 
-const (
-	keepMessages = 1024 // # of messages to keep for viewing
-)
+var KeepMessages = 1024 // # of messages to keep for viewing)
 
 func New(ur *uri.URI) (*client.Client, error) {
 	c := &client.Client{
@@ -36,8 +34,8 @@ type bufferHandler struct {
 }
 
 func (b *bufferHandler) Write(p []byte) (int, error) {
-	if len(b.client.Buffer) >= keepMessages {
-		b.client.Buffer = b.client.Buffer[:keepMessages-1]
+	if len(b.client.Buffer) >= KeepMessages {
+		b.client.Buffer = b.client.Buffer[:KeepMessages-1]
 	}
 	b.client.Buffer = append(b.client.Buffer, p)
 	return len(p), nil
