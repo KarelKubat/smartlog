@@ -58,6 +58,7 @@ func main() {
 			"%v\nwhen using a TCP or UDP client: make sure to at least run `nc -ul $PORT` or `nc -tl $PORT` on the receiving host\n", err)
 		return
 	}
+	c.DebugThreshold = 5
 
 	nMessages := 0
 	sendf := func(f func(string, ...interface{}) error, msg string, args ...interface{}) error {
@@ -68,10 +69,21 @@ func main() {
 		nMessages++
 		return err
 	}
+	debugf := func(f func(int, string, ...interface{}) error, lev int, msg string, args ...interface{}) error {
+		err := f(lev, msg, args...)
+		if *vFlag {
+			client.Infof("sent: "+msg, args...)
+		}
+		nMessages++
+		return err
+	}
 
 	start := time.Now()
 	sendf(c.Infof, "------------- run start -------------")
 	for nMessages <= *nFlag {
+		if err = debugf(c.Debugf, nMessages%10, "debug message %d at lev %d", nMessages, nMessages%10); err != nil {
+			return
+		}
 		if err = sendf(c.Infof, "informational message %d", nMessages); err != nil {
 			return
 		}
