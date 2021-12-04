@@ -83,7 +83,128 @@ After this, you should:
 - See the same messages in `/tmp/out/txt` (because of the client `file:///tmp/out.txt`)
 - See the same messages when you point your browser to `http://localhost:8080`.
 
+If you want to see it slower, rerun in the third terminal:
+
+   ```sh
+   # Terminal #3
+   # Use the test client to generate some noise and send it over UDP to port 2021.
+   # Flag -d=0.5s waits half a second after emitting a message. You can also run `tail -f /tmp/out.txt`
+   # in yet another terminal to see that file grow.
+   go run main/testclient/testclient.go udp://localhost:2021
+   ```
+
+## The client code
+
+---
+
+### Overview of message-generating methods
+
+Method                                  | Remarks
+------                                  | -------
+`Debug(lev uint8, msg string)`          | Tracing messages, generated when `lev` is below or equal to `client.DebugThreshold`. First type to be dropped when messages can't be dispatched fast enough.
+`Debugf(lev uint8, format string, ...)` | `Printf()`-like variant
+`Info(msg string)`                      | Informational messages, should be readable for users. Second type to be dropped.
+`Infof(format string, ...)`             | `Printf()`-like variant
+`Warn(msg string)`                      | Warnings that should stand out.
+`Warnf(format string, ...)`             | `Printf()`-like variant
+`Fatal(msg string)`                     | Fatal messages. Invocation exits the program. **Use with care** as goroutines are not stopped, buffers are not flushed etc..
+`Fatalf(format string, ...)`            | `Printf()`-like variant
+
+### The default (global) client and non-global clients
+
+Smartlog provides a default (global) client and generic functions `Info()` (or ~`f)`, `Warn()` (or ~`f`) etc. The default client is `client.DefaultClient`.
+
+The following invocations are equivalent:
+
+```go
+import (
+  "smartlog/client"
+)
+...
+client.Info("hello world")
+client.DefaultClient.Info("hello world")
+```
+
+The default client sends its output to `stdout`. It can be redefined to emit messages to another destination:
+
+```go
+import (
+  "smartlog/client"
+  "smartlog/client/any"
+)
+...
+var err error
+client.Info("hello world") // goes to stdout
+client.DefaulClient, err = any.New("udp://localhost:2021"), err != nil { 
+  handleError(err) 
+}
+client.Info("hello world") // now dispatched over UDP
+```
+
+Non-global clients can be similarly constructed. That way your program can instantiate multiple loggers for multiple purposes.
+
+```go
+import (
+  "smartlog/client"
+  "smartlog/client/any"
+)
+...
+cl, err := any.New("udp://localhost:2021")
+if err != nil { 
+  handleError(err)
+}
+if err := cl.Info("hello world"); err != nil {
+  handleError(err)
+}
+```
+
+### Controlling whether Debug() and Debugf() generate messages
+
+The functions `Debug()` and `Debugf()` only generates messages when the level which is passed-in the call doesn't exceed the treshold `client.DebugThreshold`.  The default threshold an unsigned 8bit integer which defaults to zero. This means that out of the box `Debug(1, msg)`, `Debug(2, msg)` etc. don't produce logging.
+
+Example:
+
+```go
+include (
+  "flag"
+  "smartlog/client"
+)
+
+func main() {
+  verbosityFlag := flag.Int("verbosity", 0, "verbosity of debug messages")
+  flag.Parse()
+
+  client.Debugf(3, "lorem ipsum")  // suppressed unless -verbosity=3 (or higher) is given
+}
+...
+```
+
+### The any client and URIs
+
+The module `smartlog/any` can parse a URI and return corresponding Smartlog client. A URI consists of a scheme (`file`, `udp` etc.), followed by `://`, followed by one or more colon-separated parts.
+
+- `any.New("file://stdout")` returns a client that writes to `stdout`
+- `any.New("file://FILENAME")` returns a client that appends to `FILENAME`
+- `any.New("http://HOSTNAME:PORT")` returns a client that buffers messages that can be viewed by a browser
+- `any.New("udp://HOSTNAME:PORT"`) returns a client that sends messages to a UDP listener
+- `any.New("tcp://HOSTNAME:PORT"`) is simlar, but used TCP for transport
+
+## Server Code
+
+---
+
+Chances are that you won't need to include code for the smartlog server in your programs. The binary `smartlog-server` is usually sufficient. However, in short:
+
+The server is in the module `"smartlog/server"`.  Using it is a three-step process:
+
+- Instantiation using `server.New()`
+- Adding at least one fanout client using `AddClient()`
+- Starting `Serve()`.
+
+For an example see the file `main/server/smartlog-server.go`.
+
 ## Tweaks
+
 ---
 
 ### Timestamps
@@ -120,5 +241,27 @@ http.KeepMessages = 10000 // store a lot of messages
 It should be noted that if you need to do this, then maybe you should not log just to an HTTP client, but in parallel also to a different kind - maybe a file client that's not limited by resources (other than diskspace, which is cheap). This can be achieved by:
 
 - Instantiating a forwarding client over TCP or UDP,
-- Having a Smartlog server aaccept these messages
+- Having a Smartlog server accept these messages,
 - Configuring it to fan out the messages to both an HTTP and a file client.
+
+### Finding dropped network links
+
+When networked clients detect a problem while trying to send a message to a Smartlog server, they will try to re-establish the connection. Reconnecting is a back-off process:
+
+- It's retried `client.RestartAttempts` times
+- Between each retry there is an increased waiting period, which is `client.RestartWait` during the first retry, twice as long during the second retry, three times as long during the third, and so on.
+- When all attempts are exhausted reconnecting fails, sending the message fails, and `client.Info()` or whichever funtion was invoked returns an error.
+
+The actual numbers can be found in `client/client.go`. If you need to adjust them:
+
+```go
+import (
+  "time"
+  "smartlog/client"
+)
+...
+client.RestartAttempts = 50               // try 50 times
+client.RestartWait     = time.Second / 2  // wait 0.5sec and retry, then 1.0sec and retry, then 1.5sec etc.
+```
+
+NOTE: A similar mechanism is used by the smartlog server to establish listeners. Upon failed reads it tries to start a new one, `server.RestartAttempts` times, with a wait time of `server.RestartWait` during the first retry, twice as much during the second retry, etc..
