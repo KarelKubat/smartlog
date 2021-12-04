@@ -18,10 +18,10 @@ func Warnf(format string, args ...interface{}) error {
 	return DefaultClient.Warnf(format, args...)
 }
 
-func Error(msg string) error {
-	return DefaultClient.Error(msg)
+func Fatal(msg string) error {
+	return DefaultClient.Fatal(msg)
 }
 
-func Errorf(format string, args ...interface{}) error {
-	return DefaultClient.Errorf(format, args...)
+func Fatalf(format string, args ...interface{}) error {
+	return DefaultClient.Fatalf(format, args...)
 }

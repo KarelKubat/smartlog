@@ -4,6 +4,7 @@ import (
 	"errors"
 	"smartlog/client"
 	"smartlog/client/file"
+	"smartlog/client/http"
 	"smartlog/client/network"
 	"smartlog/client/none"
 	"smartlog/uri"
@@ -23,6 +24,8 @@ func New(u string) (*client.Client, error) {
 		return network.New(ur)
 	case uri.UDP:
 		return network.New(ur)
+	case uri.HTTP:
+		return http.New(ur)
 	}
-	return nil, errors.New("nternal foobar, unhandled case in any.New")
+	return nil, errors.New("internal foobar, unhandled case in any.New")
 }
