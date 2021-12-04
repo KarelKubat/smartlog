@@ -1,31 +1,39 @@
 # Smartlog
 
-Smartlog is a package for Go to make setting up logging easier. Log statements can be processed locally (to `stdout` or a file) or sent remotely to a server over TCP or UDP for further handling.
+Smartlog is a package for Go to make setting up logging easier. Log statements can be processed locally (to `stdout` or a file), made visible in a webpage, or sent remotely to a server over TCP or UDP for further handling.
 
 Smartlog contains all support code to embed such logging into your programs:
 
-- To embed client code into your programs that need to emit log messages
-- To embed server code into a centralized server for further processing.
+- To embed client code into your programs that need to emit log messages,
+- To embed server code into a centralized server for further processing,
+- ... though there is also a ready-to-use `smartlog-server` that should cover most usecases.
+
+> Smartlog tries to be smart in the following design choices:
+>
+> - Smartlog understands message types. When messages are generated faster then they can be handled, less important ones are dropped. More important ones are never dropped.
+> - Smartlog keeps the client code short and simple. You are encouraged to log to just one log destination to keep the overhead low; you don't want to slow down your program just because you add logging. If you want to fan out to multiple destinations, you're encouraged to forward messages a Smartlog server and to fan out from there.
+> - If you log to a file, Smartlog will just append to it and it will detect when the logfile disappears - have an external script manage log saving and rotating. That doesn't need to be part of the program code.
 
 ## Concepts
----
 
 ### Emitting messages from your Go program
 
 A program that wishes to provide some logging information uses a Smartlog client to emit messages. Smartlog supports several message types:
 
-- Debug messages, which are emitted when a debug level is exceeded. You can sprinkle calls to `client.Debug(lev, msg)` with different levels in your program and then set an appropriate threshold to either have these emitted or suppressed.
-- Informational messages: `client.Info(msg)`
-- Warnings: `client.Warn(msg)`
+- Debug messages, which are emitted when a threshold is exceeded. You can sprinkle calls to `client.Debug(lev, msg)` with different levels in your program and then set an appropriate threshold to either have these emitted or suppressed.
+- Informational messages: `client.Info(msg)`,
+- Warnings: `client.Warn(msg)`,
 - Fatal errors: `client.Fatal(msg)` which also cause the program to exit.
 - There are corresponding `~f()` versions that accept a format string and arguments, a-la `fmt.Printf()` - e.g., `client.Warnf(format, ...args)`.
 
-There are tons of discussions on what logging should be aimed at, what it should do, and especially what it should not do. Smartlog isn't as pure as the suggestions by [Dave Cheney](https://dave.cheney.net/2015/11/05/lets-talk-about-logging) but instead chooses the following approach:
+*Philosphical intermezzo.*
 
-- Debug messages can be used during development and should be aimed at programmers. You can leave them in the code; in production they can be turned into no-ops by choosing an appropriate level. Or, if needed, you can turn up the level and see what's going on.
-- Informational messages are aimed at users in order to provide relevant (business) data, like "your bank balance looks great today".
-- Warnings are just informational messages that should stand out, like "your bank balance is dangerously low". They don't fix anything; the dangerous situation still needs to be handled by your program.
-- Fatals should not be used, except in the simplest of programs where it's ok to `exit(1)` and to abandon all running threads, pending file writes, etc.. Programs that need cleanups should just issue a warning, and let the appropriate error bubble up to `main()` for handling.
+*There are tons of discussions on what logging should be aimed at, what it should do, and especially what it should not do. Smartlog isn't as pure as the suggestions by [Dave Cheney](https://dave.cheney.net/2015/11/05/lets-talk-about-logging) but instead chooses the following approach:*
+
+- *Debug messages can be used during development and should be aimed at programmers. You can leave them in the code; in production they can be turned into no-ops by choosing an appropriate level. Or, if needed, you can turn up the level and see what's going on.*
+- *Informational messages are aimed at users in order to provide relevant (business) data, like "your bank balance looks great today".*
+- *Warnings are just informational messages that should stand out, like "your bank balance is dangerously low". They don't fix anything; the dangerous situation still needs to be handled by your program.*
+- *Fatals should not be used, except in the simplest of programs where it's ok to `exit(1)` and to abandon all running threads, pending file writes, etc.. Programs that need cleanups should just issue a warning, and let the appropriate error bubble up to `main()` for handling.*
 
 Smartlog servers have a queue for incoming messages. When this queue fills up (i.e., messages are received faster than they are handled) then debug messages are discarded first. If the queue still fills up, informational messages are discarded. Received arnings and fatals are never discarded.
 
@@ -33,18 +41,18 @@ Smartlog servers have a queue for incoming messages. When this queue fills up (i
 
 Client types define how a message should be handled. Smartlog supports the following types:
 
-- File-based clients dump messages into a file. New clients that point to the same file append to the file instead of overwriting it (this is also the case when you re-run your program and point to the same file as the last time). The file may disappear while your program is running; in that case, smartlog will simply re-open it. This is practical for logfile rotation: an external script may e.g. move the file and zip it, and smartlog will simply create a new one.
+- File-based clients dump messages into a file. New clients that point to the same file append to the file instead of overwriting it (this is also the case when you re-run your program and point to the same file as the last time). The file may disappear while your program is running; in that case, smartlog will simply re-open it.
 - A special case is the filename `stdout`, which instructs smartlog to send messges to the console.
 - HTTP clients start an HTTP server where messages can be viewed.
 - Forwarding clients send messages to a remote server. Smartlog supports UDP and TCP:
   - UDP is faster, but the network transmission is not guaranteed.
   - TCP is slower, but guaranteed.
 
-All client types except the forwarding clients can be used stand-alone, i.e., just as a part of your program. Forwarding clients require a Smartlog server.
+All client types except the forwarding clients can be used stand-alone, i.e., just as a part of your program. Forwarding clients normally require a Smartlog server (in test scenarios `nc` or `netcat` can be used).
 
 ### Smartlog servers need smartlog clients too
 
-A Smartlog server (which receives messages over TCP or UDP) is in itself useless. It needs clients to do something with incoming messages. The clients that a server uses are are identical to any client that you'd use in your own program: messages arriving at the server may be sent to a file, to `stdout`, kept for viewing in an HTTP client, or forwarded to next hops (and the story repeats at the Smartlog servers that accept those messages).
+A Smartlog server (which receives messages over TCP or UDP) is in itself useless. It needs clients to do something with incoming messages. The clients that a server uses are are identical to any client that you'd use in your own program: messages arriving at the server may be sent to a file, to `stdout`, kept for viewing in a browser, or forwarded to next hops (and the story repeats at the Smartlog servers that accept those via-hop-messages).
 
 Here is an example that uses ready-to-run programs in the package:
 
@@ -52,8 +60,10 @@ Here is an example that uses ready-to-run programs in the package:
 
    ```sh
    # Terminal #1
-   # The first positional argument is the server, others are clients.
-   # Accept messages on TCP, port 2022. Save them to /tmp/out.txt and make them viewable on http://localhost:8080.
+   # The first positional argument is the server, others are clients. Instructions to smartlog-server:
+   # - Accept messages on TCP, port 2022. 
+   # - Save them to /tmp/out.txt.
+   # - Make them viewable on http://localhost:8080.
    # tcp://:2022 means any IP on this machine. The filename /tmp/out.txt leads to three slashes in
    # file:///tmp/out.txt; file:// already needs 2.
    go run main/server/smartlog-server.go tcp://:2022 file:///tmp/out.txt http://localhost:8080
@@ -63,8 +73,8 @@ Here is an example that uses ready-to-run programs in the package:
 
    ```sh
    # Terminal #2
-   # Accept messages on UDP, port 2021. Fan these out to `stdout` and forward them to the TCP server in
-   # terminal #1.
+   # - Accept messages on UDP, port 2021. 
+   # - Fan these out to `stdout` and forward them to the TCP server in above terminal #1.
    # udp://2021 means any IP in this machine.
    go run main/server/smartlog-server.go udp://:2021 file://stdout tcp://localhost:2022
    ```
@@ -87,15 +97,13 @@ If you want to see it slower, rerun in the third terminal:
 
    ```sh
    # Terminal #3
-   # Use the test client to generate some noise and send it over UDP to port 2021.
-   # Flag -d=0.5s waits half a second after emitting a message. You can also run `tail -f /tmp/out.txt`
-   # in yet another terminal to see that file grow.
-   go run main/testclient/testclient.go udp://localhost:2021
+   # Flag -d=0.5s waits half a second after emitting a message. You will see the messages flowing
+   # into the other terminals.
+   # can also run `tail -f /tmp/out.txt` in yet another terminal to see that file grow.
+   go run main/testclient/testclient.go -d=0.5s udp://localhost:2021
    ```
 
 ## The client code
-
----
 
 ### Overview of message-generating methods
 
@@ -135,9 +143,12 @@ import (
 ...
 var err error
 client.Info("hello world") // goes to stdout
+
+var err error
 client.DefaulClient, err = any.New("udp://localhost:2021"), err != nil { 
   handleError(err) 
 }
+
 client.Info("hello world") // now dispatched over UDP
 ```
 
@@ -160,7 +171,7 @@ if err := cl.Info("hello world"); err != nil {
 
 ### Controlling whether Debug() and Debugf() generate messages
 
-The functions `Debug()` and `Debugf()` only generates messages when the level which is passed-in the call doesn't exceed the treshold `client.DebugThreshold`.  The default threshold an unsigned 8bit integer which defaults to zero. This means that out of the box `Debug(1, msg)`, `Debug(2, msg)` etc. don't produce logging.
+The method `Debug()` (or its sibling ~`f()`) only generates messages when the level which is passed-in the call doesn't exceed the treshold `client.DebugThreshold`.  The default threshold an non-negative nteger (type `uint8`) which defaults to zero. This means that out of the box `Debug(1, msg)`, `Debug(2, msg)` etc. don't produce logging unless `client.DebugThreshold` is modified.
 
 Example:
 
@@ -173,6 +184,7 @@ include (
 func main() {
   verbosityFlag := flag.Int("verbosity", 0, "verbosity of debug messages")
   flag.Parse()
+  client.DebugThreshold = *verbosityFlag
 
   client.Debugf(3, "lorem ipsum")  // suppressed unless -verbosity=3 (or higher) is given
 }
@@ -191,27 +203,24 @@ The module `smartlog/any` can parse a URI and return corresponding Smartlog clie
 
 ## Server Code
 
----
-
 Chances are that you won't need to include code for the smartlog server in your programs. The binary `smartlog-server` is usually sufficient. However, in short:
 
-The server is in the module `"smartlog/server"`.  Using it is a three-step process:
+The server is in the module `"smartlog/server"`.  Using it is a has multiple steps:
 
-- Instantiation using `server.New()`
-- Adding at least one fanout client using `AddClient()`
-- Starting `Serve()`.
+- Instantiation using `srv, err := erver.New(uriString)`
+- Adding at least one fanout client using `srv.AddClient(someClient)`
+- Starting `srv.Serve()`.
+- The server may be shut down using `srv.Close()`.
 
-For an example see the file `main/server/smartlog-server.go`.
+For an example see the file [`main/server/smartlog-server.go`](blob/master/main/server/smartlog-server.go).
 
 ## Tweaks
-
----
 
 ### Timestamps
 
 Any client-side invocation like `client.Info("hello world")` leads to a message which has the timestamp. Two settings can be controlled:
 
-- The timestamp format: the default is `"2006-01-02 15:04:05 MST"` (see e.g. the [Go time package](https://pkg.go.dev/time) or [Geeks for geeks](https://www.geeksforgeeks.org/time-formatting-in-golang/)
+- The timestamp format: the default is `"2006-01-02 15:04:05 MST"` (see e.g. the [Go time package](https://pkg.go.dev/time) or [Geeks for geeks](https://www.geeksforgeeks.org/time-formatting-in-golang/)).
 - Whether the time is displayed relative to localtime or to UTC: the default is `false`: the localtime is shown, not the UTC time.
 
 To change the defaults, simply modify the global variables in `smartlog/msg`:
@@ -264,4 +273,4 @@ client.RestartAttempts = 50               // try 50 times
 client.RestartWait     = time.Second / 2  // wait 0.5sec and retry, then 1.0sec and retry, then 1.5sec etc.
 ```
 
-NOTE: A similar mechanism is used by the smartlog server to establish listeners. Upon failed reads it tries to start a new one, `server.RestartAttempts` times, with a wait time of `server.RestartWait` during the first retry, twice as much during the second retry, etc..
+> NOTE: A similar mechanism is used by the smartlog server to establish listeners. Upon failed reads it tries to start a new one, `server.RestartAttempts` times, with a wait time of `server.RestartWait` during the first retry, twice as much during the second retry, etc..
