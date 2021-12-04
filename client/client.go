@@ -20,7 +20,7 @@ var (
 type Client struct {
 	// May be set by client code
 	TimeFormat     string // defaults to YYYY-MM-DD HH:MM:SS localtime
-	DebugThreshold int    // defaults to 0
+	DebugThreshold uint8  // defaults to 0
 
 	// Set by implementations
 	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)
@@ -34,14 +34,14 @@ func (c *Client) String() string {
 	return fmt.Sprintf("%v", c.URI)
 }
 
-func (c *Client) Debug(lev int, message string) error {
+func (c *Client) Debug(lev uint8, message string) error {
 	if lev > c.DebugThreshold {
 		return nil
 	}
 	return c.sendToWriter(msg.Debug, message)
 }
 
-func (c *Client) Debugf(lev int, format string, args ...interface{}) error {
+func (c *Client) Debugf(lev uint8, format string, args ...interface{}) error {
 	return c.Debug(lev, fmt.Sprintf(format, args...))
 }
 

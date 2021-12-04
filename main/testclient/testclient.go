@@ -71,9 +71,9 @@ func main() {
 		nMessages++
 		return err
 	}
-	debugf := func(f func(int, string, ...interface{}) error, lev int, msg string, args ...interface{}) error {
+	debugf := func(lev uint8, msg string, args ...interface{}) error {
 		time.Sleep(*dFlag)
-		err := f(lev, msg, args...)
+		err := c.Debugf(lev, msg, args...)
 		if *vFlag {
 			client.Infof("sent: "+msg, args...)
 		}
@@ -84,7 +84,7 @@ func main() {
 	start := time.Now()
 	sendf(c.Infof, "------------- run start -------------")
 	for nMessages <= *nFlag {
-		if err = debugf(c.Debugf, nMessages%10, "debug message %d at lev %d", nMessages, nMessages%10); err != nil {
+		if err = debugf(uint8(nMessages%10), "debug message %d at lev %d", nMessages, nMessages%10); err != nil {
 			return
 		}
 		if err = sendf(c.Infof, "informational message %d", nMessages); err != nil {
