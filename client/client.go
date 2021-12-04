@@ -5,10 +5,16 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"smartlog/msg"
 	"smartlog/uri"
+)
+
+var (
+	RestartWait     = time.Second / 10 // waittime between listener restarts
+	RestartAttempts = 10               // # of restart attempts
 )
 
 type Client struct {
@@ -17,11 +23,11 @@ type Client struct {
 	DebugThreshold int    // defaults to 0
 
 	// Set by implementations
-	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)	
+	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)
 	URI        *uri.URI  // URI from which the client was constructed
 	Conn       net.Conn  // Only in network loggers
 	IsTrueFile bool      // Only in file loggers
-	Buffer    [][]byte   // only in HTTP loggers
+	Buffer     [][]byte  // only in HTTP loggers
 }
 
 func (c *Client) String() string {
@@ -67,6 +73,7 @@ func (c *Client) Fatalf(format string, args ...interface{}) error {
 	return c.Fatal(fmt.Sprintf(format, args...))
 }
 
+// Called by the server to pass messages already containing a timestamp etc. to clients.
 func (c *Client) Passthru(buf []byte) error {
 	if c.URI.Scheme == uri.None {
 		return nil
@@ -74,6 +81,7 @@ func (c *Client) Passthru(buf []byte) error {
 	return c.write(buf)
 }
 
+// Called by file:// clients.
 func (c *Client) OpenFile() error {
 	if c.URI.Scheme != uri.File || c.URI.Parts[0] == "stdout" {
 		return fmt.Errorf("%v: attempt to open a file but this URI is not file-based", c)
@@ -85,6 +93,20 @@ func (c *Client) OpenFile() error {
 	}
 	c.IsTrueFile = true
 	return nil
+}
+
+// Called by network clients (tcp:// or udp://).
+func (c *Client) Connect() error {
+	var err error
+	for i := 0; i < RestartAttempts; i++ {
+		time.Sleep(RestartWait * time.Duration(i))
+		c.Conn, err = net.Dial(c.URI.Scheme.String(), strings.Join(c.URI.Parts, ":"))
+		if err == nil {
+			c.Writer = c.Conn
+			return nil
+		}
+	}
+	return fmt.Errorf("%v: failed to (re)connect: %v", c, err)
 }
 
 func (c *Client) timeStamp() []byte {
@@ -129,7 +151,19 @@ func (c *Client) write(buf []byte) error {
 	for nWritten < len(buf) {
 		n, err := c.Writer.Write(buf)
 		if err != nil {
-			return fmt.Errorf("%v: write failure: %v", c, err)
+			// Write errors on clients try to reconnect, if the error is due a broken pipe.
+			// Otherwise the error goes to the caller for handling.
+			if c.URI.Scheme != uri.TCP && c.URI.Scheme != uri.UDP || !strings.Contains(err.Error(), "broken pipe") {
+				return fmt.Errorf("%v: write failure: %v", c, err)
+			}
+			Warnf("%v: write failure on network client: %v", c, err)
+			if err := c.Connect(); err != nil {
+				return err
+			}
+			n, err = c.Writer.Write(buf)
+			if err != nil {
+				return fmt.Errorf("%v: write failure despite reconnecting: %v", c, err)
+			}
 		}
 		nWritten += n
 	}
