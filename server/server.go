@@ -15,11 +15,14 @@ import (
 )
 
 const (
-	chSize          = 1024              // # of messages that may be buffered while fanning out
-	dropInfo        = chSize * 75 / 100 // drop Info(f) when 75% full
-	dropDebug       = chSize * 50 / 100 // drop Debug(f) when 50% full
-	restartWait     = time.Second / 10  // waittime between listener restarts
-	restartAttempts = 10                // # of restart attempts
+	chSize    = 1024              // # of messages that may be buffered while fanning out
+	dropInfo  = chSize * 75 / 100 // drop Info(f) when 75% full
+	dropDebug = chSize * 50 / 100 // drop Debug(f) when 50% full
+)
+
+var (
+	RestartWait     = time.Second / 10 // waittime between listener restarts
+	RestartAttempts = 10               // # of restart attempts
 )
 
 type Server struct {
@@ -105,8 +108,8 @@ func (s *Server) udpStartListener() error {
 	var err error
 	var addr *net.UDPAddr
 
-	for i := 0; i < restartAttempts; i++ {
-		time.Sleep(restartWait * time.Duration(i))
+	for i := 0; i < RestartAttempts; i++ {
+		time.Sleep(RestartWait * time.Duration(i))
 		addr, err = net.ResolveUDPAddr(s.URI.Scheme.String(), strings.Join(s.URI.Parts, ":"))
 		if err != nil {
 			return fmt.Errorf("%v: failed to resolve address: %v", s, err)
@@ -152,8 +155,8 @@ func (s *Server) udpServe() error {
 
 func (s *Server) tcpStartListener() error {
 	var err error
-	for i := 0; i < restartAttempts; i++ {
-		time.Sleep(restartWait * time.Duration(i))
+	for i := 0; i < RestartAttempts; i++ {
+		time.Sleep(RestartWait * time.Duration(i))
 		s.tcpListener, err = net.Listen(s.URI.Scheme.String(), strings.Join(s.URI.Parts, ":"))
 		if err == nil {
 			return nil
