@@ -12,15 +12,16 @@ import (
 )
 
 type Client struct {
-	// Present in all loggers, may be set by client code
+	// May be set by client code
 	TimeFormat     string // defaults to YYYY-MM-DD HH:MM:SS localtime
 	DebugThreshold int    // defaults to 0
 
-	// Present in all loggers, set by implementations (network, file etc.)
-	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)
+	// Set by implementations
+	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)	
 	URI        *uri.URI  // URI from which the client was constructed
 	Conn       net.Conn  // Only in network loggers
 	IsTrueFile bool      // Only in file loggers
+	Buffer    [][]byte   // only in HTTP loggers
 }
 
 func (c *Client) String() string {
@@ -54,16 +55,16 @@ func (c *Client) Warnf(format string, args ...interface{}) error {
 	return c.Warn(fmt.Sprintf(format, args...))
 }
 
-func (c *Client) Error(message string) error {
-	if err := c.sendToWriter(msg.Error, message); err != nil {
+func (c *Client) Fatal(message string) error {
+	if err := c.sendToWriter(msg.Fatal, message); err != nil {
 		return err
 	}
 	os.Exit(1)
 	return nil // to satisfy the prototype
 }
 
-func (c *Client) Errorf(format string, args ...interface{}) error {
-	return c.Error(fmt.Sprintf(format, args...))
+func (c *Client) Fatalf(format string, args ...interface{}) error {
+	return c.Fatal(fmt.Sprintf(format, args...))
 }
 
 func (c *Client) Passthru(buf []byte) error {

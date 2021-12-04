@@ -10,7 +10,7 @@ const (
 	debugTag   byte = 'D' // Tags for Debug(f) etc.
 	infoTag         = 'I'
 	warnTag         = 'W'
-	errorTag        = 'E'
+	fatalTag        = 'F'
 	unknownTag      = '?' // For reparsing misses
 
 	separator = '|' // Message parts are separated by space, separator, space
@@ -28,7 +28,7 @@ const (
 	Debug MsgType = iota
 	Info
 	Warn
-	Error
+	Fatal
 	Unknown
 )
 
@@ -36,7 +36,7 @@ var tagForType = map[MsgType]byte{
 	Debug:   debugTag,
 	Info:    infoTag,
 	Warn:    warnTag,
-	Error:   errorTag,
+	Fatal:   fatalTag,
 	Unknown: unknownTag,
 }
 
@@ -44,7 +44,7 @@ var typeForTag = map[byte]MsgType{
 	debugTag:   Debug,
 	infoTag:    Info,
 	warnTag:    Warn,
-	errorTag:   Error,
+	fatalTag:   Fatal,
 	unknownTag: Unknown,
 }
 
