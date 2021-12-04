@@ -1,6 +1,6 @@
 # Smartlog
 
-Smartlog is a package for Go to make setting up logging easier. Log statements can be processed locally (to `stdout` or a file), made visible in a webpage, or sent remotely to a server over TCP or UDP for further handling.
+Smartlog is a yeat-another-package for Go to make logging easier. Log statements can be processed locally (to `stdout` or a file), made visible in a webpage, or sent remotely to a server over TCP or UDP for further handling.
 
 Smartlog contains all support code to embed such logging into your programs:
 
@@ -11,7 +11,7 @@ Smartlog contains all support code to embed such logging into your programs:
 > Smartlog tries to be smart in the following design choices:
 >
 > - Smartlog understands message types. When messages are generated faster then they can be handled, less important ones are dropped. More important ones are never dropped.
-> - Smartlog keeps the client code short and simple. You are encouraged to log to just one log destination to keep the overhead low; you don't want to slow down your program just because you add logging. If you want to fan out to multiple destinations, you're encouraged to forward messages a Smartlog server and to fan out from there.
+> - Smartlog keeps the client code short and simple. You are encouraged to log to just one log destination to keep the overhead low; you don't want to slow down your program just because you add logging. If you want to fan out to multiple destinations, you're encouraged to forward messages a smartlog server and to fan out from there.
 > - If you log to a file, Smartlog will just append to it and it will detect when the logfile disappears - have an external script manage log saving and rotating. That doesn't need to be part of the program code.
 
 ## Concepts
@@ -52,7 +52,7 @@ All client types except the forwarding clients can be used stand-alone, i.e., ju
 
 ### Smartlog servers need smartlog clients too
 
-A Smartlog server (which receives messages over TCP or UDP) is in itself useless. It needs clients to do something with incoming messages. The clients that a server uses are are identical to any client that you'd use in your own program: messages arriving at the server may be sent to a file, to `stdout`, kept for viewing in a browser, or forwarded to next hops (and the story repeats at the Smartlog servers that accept those via-hop-messages).
+A Smartlog server (which receives messages over TCP or UDP) is in itself useless. It needs clients to do something with incoming messages. The clients that a server uses are are identical to any client that you'd use in your own program: messages arriving at the server may be sent to a file, to `stdout`, kept for viewing in a browser, or forwarded to next hops (and the story repeats at the smartlog servers that accept those via-hop-messages).
 
 Here is an example that uses ready-to-run programs in the package:
 
@@ -255,7 +255,7 @@ It should be noted that if you need to do this, then maybe you should not log ju
 
 ### Finding dropped network links
 
-When networked clients detect a problem while trying to send a message to a Smartlog server, they will try to re-establish the connection. Reconnecting is a back-off process:
+When networked clients detect a problem while trying to send a message to a smartlog server, they will try to re-establish the connection. Reconnecting is a back-off process:
 
 - It's retried `client.RestartAttempts` times
 - Between each retry there is an increased waiting period, which is `client.RestartWait` during the first retry, twice as long during the second retry, three times as long during the third, and so on.
