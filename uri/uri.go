@@ -14,10 +14,11 @@ const (
 	File
 	UDP
 	TCP
+	HTTP
 )
 
 func (u URISchema) String() string {
-	return []string{"none", "file", "udp", "tcp"}[u]
+	return []string{"none", "file", "udp", "tcp", "http"}[u]
 }
 
 type URI struct {
@@ -56,6 +57,11 @@ func New(s string) (*URI, error) {
 			uriType:     TCP,
 			parts:       2,
 			description: "tcp://SERVER:PORT",
+		},
+		"http": {
+			uriType:     HTTP,
+			parts:       2,
+			description: "http://SERVER:PORT",
 		},
 	}
 
