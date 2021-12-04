@@ -10,13 +10,14 @@ import (
 
 	"smartlog/client"
 	"smartlog/linebuf"
+	"smartlog/msg"
 	"smartlog/uri"
 )
 
 const (
-	// chSize = 1024 // # of messages that may be buffered while fanning out
-	chSize          = 20                // # of messages that may be buffered while fanning out
-	dropInfo        = chSize * 100 / 75 // when to start dropping networke-bound Info(f) messages
+	chSize          = 1024              // # of messages that may be buffered while fanning out
+	dropInfo        = chSize * 75 / 100 // drop Info(f) when 75% full
+	dropDebug       = chSize * 50 / 100 // drop Debug(f) when 50% full
 	restartWait     = time.Second / 10  // waittime between listener restarts
 	restartAttempts = 10                // # of restart attempts
 )
@@ -209,17 +210,35 @@ func (s *Server) handleTCPConnection(conn net.Conn) {
 
 func (s *Server) fanout() {
 	// fanout() never returns, but forever consumes messages from the bufCh
+	var dropped bool
+
 	for {
 		buf := <-s.bufCh
-		// TESTCODE starts
-		// fmt.Println("bufsz:", len(s.bufCh))
-		// time.Sleep(time.Second / 10)
-		// TESTCODE ends
 
-		// TODO:
-		//  reparse the buffer
-		//  if Infotag present && len(s.bufCh) > dropInfo: discard the message
+		// The threshold to drop debug messages is lowest. If that is overrun then we need to reparse the message,
+		// see what type it is and maybe drop it.
+		chLen := len(s.bufCh)
+		if chLen > dropDebug {
+			var shouldDrop bool
+			t := msg.TypeFromBytes(buf)
+			switch t {
+			case msg.Debug:
+				shouldDrop = true
+			case msg.Info:
+				if chLen > dropInfo {
+					shouldDrop = true
+				}
+			}
+			if shouldDrop {
+				if !dropped {
+					dropped = true
+					client.Warnf("%v: dropping debug/info message(s), %v already buffered, limit %v", s, chLen, dropInfo)
+					continue
+				}
+			}
+		}
 
+		dropped = false
 		var wg sync.WaitGroup
 		for _, c := range s.clients {
 			wg.Add(1)
