@@ -12,17 +12,30 @@ import (
 )
 
 type Client struct {
-	// Present in all loggers
-	TimeFormat string    // defaults to YYYY-MM-DD HH:MM:SS localtime
+	// Present in all loggers, may be set by client code
+	TimeFormat     string // defaults to YYYY-MM-DD HH:MM:SS localtime
+	DebugThreshold int    // defaults to 0
+
+	// Present in all loggers, set by implementations (network, file etc.)
 	Writer     io.Writer // writer for Info(f), Warn(f), Error(f)
 	URI        *uri.URI  // URI from which the client was constructed
-
-	Conn       net.Conn // Only in network loggers
-	IsTrueFile bool     // Only in file loggers
+	Conn       net.Conn  // Only in network loggers
+	IsTrueFile bool      // Only in file loggers
 }
 
 func (c *Client) String() string {
 	return fmt.Sprintf("%v", c.URI)
+}
+
+func (c *Client) Debug(lev int, message string) error {
+	if lev > c.DebugThreshold {
+		return nil
+	}
+	return c.sendToWriter(msg.Debug, message)
+}
+
+func (c *Client) Debugf(lev int, format string, args ...interface{}) error {
+	return c.Debug(lev, fmt.Sprintf(format, args...))
 }
 
 func (c *Client) Info(message string) error {
@@ -30,8 +43,7 @@ func (c *Client) Info(message string) error {
 }
 
 func (c *Client) Infof(format string, args ...interface{}) error {
-	full := fmt.Sprintf(format, args...)
-	return c.Info(full)
+	return c.Info(fmt.Sprintf(format, args...))
 }
 
 func (c *Client) Warn(message string) error {
@@ -39,8 +51,7 @@ func (c *Client) Warn(message string) error {
 }
 
 func (c *Client) Warnf(format string, args ...interface{}) error {
-	full := fmt.Sprintf(format, args...)
-	return c.Warn(full)
+	return c.Warn(fmt.Sprintf(format, args...))
 }
 
 func (c *Client) Error(message string) error {
@@ -52,8 +63,7 @@ func (c *Client) Error(message string) error {
 }
 
 func (c *Client) Errorf(format string, args ...interface{}) error {
-	full := fmt.Sprintf(format, args...)
-	return c.Error(full)
+	return c.Error(fmt.Sprintf(format, args...))
 }
 
 func (c *Client) Passthru(buf []byte) error {
