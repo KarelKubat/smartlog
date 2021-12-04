@@ -20,11 +20,11 @@ Smartlog contains all support code to embed such logging into your programs:
 
 A program that wishes to provide some logging information uses a Smartlog client to emit messages. Smartlog supports several message types:
 
-- Debug messages, which are emitted when a threshold is exceeded. You can sprinkle calls to `client.Debug(lev, msg)` with different levels in your program and then set an appropriate threshold to either have these emitted or suppressed.
-- Informational messages: `client.Info(msg)`,
-- Warnings: `client.Warn(msg)`,
-- Fatal errors: `client.Fatal(msg)` which also cause the program to exit.
-- There are corresponding `~f()` versions that accept a format string and arguments, a-la `fmt.Printf()` - e.g., `client.Warnf(format, ...args)`.
+- Debug messages are emitted when a threshold is exceeded. You can sprinkle calls to `client.Debug(lev, msg)` or `Debugf(lev, format, ...)` with different levels in your program and then set an appropriate threshold to either have these emitted or suppressed.
+- Informational messages: `client.Info(msg)` or `Infof(format, ...)`,
+- Warnings: `client.Warn(msg)` or `Warnf(format, ...)`,
+- Fatal errors: `client.Fatal(msg)` or `Fatalf(format, ...)` which also cause the program to exit.
+- The ~f`()` versions accept a format string and arguments, a-la `fmt.Printf()` `.
 
 *Philosphical intermezzo.*
 
