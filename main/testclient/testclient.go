@@ -9,7 +9,6 @@ import (
 
 	"smartlog/client"
 	"smartlog/client/any"
-	"smartlog/msg"
 )
 
 // Test msg containing newlines and empty lines
@@ -43,9 +42,10 @@ func main() {
 		}
 	}()
 
-	nFlag := flag.Int("n", 100, "number of messages to send")
-	vFlag := flag.Bool("v", false, "log locally what is being sent")
-	tFlag := flag.Bool("t", true, "show timing")
+	nFlag := flag.Int("n", 100, "number of messages to generate (default 100)")
+	vFlag := flag.Bool("v", false, "log locally what is being generated (default false)")
+	tFlag := flag.Bool("t", false, "show timing before exiting (default false)")
+	dFlag := flag.Duration("d", 0, "delay between generating messages (default 0, no delay)")
 	flag.Parse()
 	if flag.NArg() != 1 {
 		err = errors.New(usage)
@@ -63,6 +63,7 @@ func main() {
 
 	nMessages := 0
 	sendf := func(f func(string, ...interface{}) error, msg string, args ...interface{}) error {
+		time.Sleep(*dFlag)
 		err := f(msg, args...)
 		if *vFlag {
 			client.Infof("sent: "+msg, args...)
@@ -71,6 +72,7 @@ func main() {
 		return err
 	}
 	debugf := func(f func(int, string, ...interface{}) error, lev int, msg string, args ...interface{}) error {
+		time.Sleep(*dFlag)
 		err := f(lev, msg, args...)
 		if *vFlag {
 			client.Infof("sent: "+msg, args...)
@@ -78,9 +80,6 @@ func main() {
 		nMessages++
 		return err
 	}
-
-	msg.DefaultTimeFormat = time.RFC3339 // format: "2006-01-02T15:04:05Z07:00"
-	msg.UTCTime = true                   // relative to UTC
 
 	start := time.Now()
 	sendf(c.Infof, "------------- run start -------------")
