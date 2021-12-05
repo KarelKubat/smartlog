@@ -23,7 +23,7 @@ if ($orgpath =~ m{tools/}) {
 
 my @hooks_to_run;
 if ($hook eq 'pre-hook') {
-    @hooks_to_run = keys(%checks_to_run);
+    @hooks_to_run = sort(keys(%checks_to_run));
 } else {
     @hooks_to_run = ($hook);
 }
