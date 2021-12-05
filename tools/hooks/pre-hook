@@ -13,6 +13,14 @@ my $orgpath = File::Spec->rel2abs(__FILE__);
 my $hook = $orgpath;
 $hook =~ s{.*/}{};
 
+if ($orgpath =~ m{tools/}) {
+    warn("\nThis should be installed in .git. Run:\n");
+    for my $k (keys(%checks_to_run)) {
+        warn("  ln -s tools/hooks/$hook .git/hooks/$k\n");
+    }
+    warn("I'll just run all pre- tests that I know of.\n\n");
+}
+
 my @hooks_to_run;
 if ($hook eq 'pre-hook') {
     @hooks_to_run = keys(%checks_to_run);
@@ -21,6 +29,7 @@ if ($hook eq 'pre-hook') {
 }
 
 for $hook (@hooks_to_run) {
+    print("===== $hook =====\n");
     my @checks = @{$checks_to_run{$hook}}
         or die("misconfiguration in $orgpath: no checks configured for hook $hook\n");
 

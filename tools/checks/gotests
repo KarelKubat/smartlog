@@ -6,24 +6,21 @@ use File::Spec;
 
 # Purpose: check that every .go file has a test and that it works.
 
-# Find the name of this module. This script **must** be tools/gotests.
-my $top = File::Spec->rel2abs(__FILE__);
-$top =~ s{/tools/gotests$}{};
-$top =~ s{.*/}{};
-
-my (@gotest, @errs);
+my %test_in_dir;
 
 sub wanted {
     my $f = $File::Find::name;
     $f =~ s{^./}{};
+    my $path = $f;
+    $path =~ s{/[^/]*$}{};
 
-    return if ($f !~ m{.go$} or $f =~ m{_test.go$});
-    return unless ($f =~ m{.go$});
-
-    my $test = $f;
-    $test =~ s{.go$}{_test.go};
-    if (! -f $test) {
-        push(@errs, "no testfile '$test' for $f");
+    if ($f =~ m{_test.go$}) {
+        $test_in_dir{$path} = 1;
+        return;
+    }
+    if ($f =~ m{.go$}) {
+        $test_in_dir{$path} = 0 unless ($test_in_dir{$path});
+        return;
     }
 }
 
@@ -32,9 +29,15 @@ find({
     no_chdir => 1,
 },  '.');
 
-system("go test ./...") and push(@errs, "go test(s) failed");
-
-for my $e (@errs) {
-    print("tools/gotests: error: $e\n")
+my $test_found;
+for my $dir (sort(keys(%test_in_dir))) {
+    if ($test_in_dir{$dir}) {
+        print("GOOD: $dir has tests, good.\n");
+        $test_found = 1;
+    } else {
+        warn("BAD:  $dir contains no tests, you should add them!\n");
+    }
 }
-exit(1) if ($#errs > -1);
+if ($test_found) {
+    system("go test ./...") and die("go test(s) failed");
+}
