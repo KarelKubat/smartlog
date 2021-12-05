@@ -1,6 +1,6 @@
 # Smartlog
 
-Smartlog is a yeat-another-package for Go to make logging easier. Log statements can be processed locally (to `stdout` or a file), made visible in a webpage, or sent remotely to a server over TCP or UDP for further handling.
+Smartlog is a yet-another-package for Go to make logging easier. (Well, easier for me, it's the way I like it.) Log statements can be processed locally (to `stdout` or a file), made visible in a webpage, or sent remotely to a server over TCP or UDP for further handling.
 
 Smartlog contains all support code to embed such logging into your programs:
 
@@ -19,17 +19,16 @@ Smartlog contains all support code to embed such logging into your programs:
 
 ### Emitting messages from your Go program
 
-A program that wishes to provide some logging information uses a Smartlog client to emit messages. Smartlog supports several message types:
+A program that wishes to provide some logging information uses a smartlog client to emit messages. Smartlog supports several message types:
 
 - Debug messages are emitted when a threshold is exceeded. You can sprinkle calls to `client.Debug(lev, msg)` or `Debugf(lev, format, ...)` with different levels in your program and then set an appropriate threshold to either have these emitted or suppressed.
 - Informational messages: `client.Info(msg)` or `Infof(format, ...)`,
 - Warnings: `client.Warn(msg)` or `Warnf(format, ...)`,
 - Fatal errors: `client.Fatal(msg)` or `Fatalf(format, ...)` which also cause the program to exit.
-- The ~f`()` versions accept a format string and arguments, a-la `fmt.Printf()` `.
 
 *Philosphical intermezzo.*
 
-*There are tons of discussions on what logging should be aimed at, what it should do, and especially what it should not do. Smartlog is neither as pure as the suggestions by [Dave Cheney](https://dave.cheney.net/2015/11/05/lets-talk-about-logging) nor as generic as Go's [log package](https://pkg.go.dev/log). Instead chooses the following approach:*
+*There's a ton of discussions on what logging should be aimed at, what it should do, and especially what it should not do. Smartlog is neither as pure as the suggestions by [Dave Cheney](https://dave.cheney.net/2015/11/05/lets-talk-about-logging) nor as generic as Go's [log package](https://pkg.go.dev/log). Instead chooses the following approach:*
 
 - *Debug messages can be used during development and should be aimed at programmers. You can leave them in the code; in production they can be turned into no-ops by choosing an appropriate level. Or, if needed, you can turn up the level and see what's going on.*
 - *Informational messages are aimed at users in order to provide relevant (business) data, like "your bank balance looks great today".*
@@ -42,7 +41,7 @@ Smartlog servers have a queue for incoming messages. When this queue fills up (i
 
 Client types define how a message should be handled. Smartlog supports the following types:
 
-- File-based clients dump messages into a file. New clients that point to the same file append to the file instead of overwriting it (this is also the case when you re-run your program and point to the same file as the last time). The file may disappear while your program is running; in that case, smartlog will simply re-open it.
+- File-based clients dump messages into a file by appending to it. The file may disappear while your program is running; in that case, smartlog will simply re-create it.
 - A special case is the filename `stdout`, which instructs smartlog to send messges to the console.
 - HTTP clients start an HTTP server where messages can be viewed.
 - Forwarding clients send messages to a remote server. Smartlog supports UDP and TCP:
@@ -55,7 +54,7 @@ All client types except the forwarding clients can be used stand-alone, i.e., ju
 
 A Smartlog server (which receives messages over TCP or UDP) is in itself useless. It needs clients to do something with incoming messages. The clients that a server uses are are identical to any client that you'd use in your own program: messages arriving at the server may be sent to a file, to `stdout`, kept for viewing in a browser, or forwarded to next hops (and the story repeats at the smartlog servers that accept those via-hop-messages).
 
-Here is an example that uses ready-to-run programs in the package:
+Here is an example that uses ready-to-run programs in the package and involves two smartlog servers:
 
 1. In one terminal run:
 
@@ -113,13 +112,13 @@ If you want to see it slower, rerun in the third terminal:
 Method                                  | Remarks
 ------                                  | -------
 `Debug(lev uint8, msg string)`          | Tracing messages, generated when `lev` is below or equal to `client.DebugThreshold`. First type to be dropped when messages can't be dispatched fast enough.
-`Debugf(lev uint8, format string, ...)` | `Printf()`-like variant
+`Debugf(lev uint8, format string, ...)` | `Printf()`-like sibling
 `Info(msg string)`                      | Informational messages, should be readable for users. Second type to be dropped.
-`Infof(format string, ...)`             | `Printf()`-like variant
+`Infof(format string, ...)`             | `Printf()`-like sibling
 `Warn(msg string)`                      | Warnings that should stand out.
-`Warnf(format string, ...)`             | `Printf()`-like variant
+`Warnf(format string, ...)`             | `Printf()`-like sibling
 `Fatal(msg string)`                     | Fatal messages. Invocation exits the program. **Use with care** as goroutines are not stopped, buffers are not flushed etc..
-`Fatalf(format string, ...)`            | `Printf()`-like variant
+`Fatalf(format string, ...)`            | `Printf()`-like sibling
 
 ### The default (global) client and non-global clients
 
@@ -173,7 +172,7 @@ if err := cl.Info("hello world"); err != nil {
 
 ### Controlling whether Debug() and Debugf() generate messages
 
-The method `Debug()` (or its sibling ~`f()`) only generates messages when the level which is passed-in the call doesn't exceed the treshold `client.DebugThreshold`.  The threshold is a non-negative nteger (type `uint8`) which defaults to zero. This means that out of the box `Debug(1, msg)`, `Debug(2, msg)` etc. don't produce logging unless `client.DebugThreshold` is modified.
+The method `Debug()` (or its sibling ~`f()`) only generates messages when the level which is passed-in the call matches the treshold `client.DebugThreshold`.  The threshold is a non-negative `uint8` which defaults to zero (so you have 256 levels at your disposal). This means that out of the box `Debug(1, msg)`, `Debug(2, msg)` etc. don't produce logging unless `client.DebugThreshold` is modified.
 
 Example:
 
@@ -195,7 +194,7 @@ func main() {
 
 ### The any client and URIs
 
-The module `smartlog/any` can parse a URI and return corresponding smartlog client. A URI consists of a scheme (`file`, `udp` etc.), followed by `://`, followed by one or more colon-separated parts.
+The module `smartlog/any` can parse a URI and return a corresponding smartlog client. A URI consists of a scheme (`file`, `udp` etc.), followed by `://`, followed by one or more colon-separated parts.
 
 - `any.New("file://stdout")` returns a client that writes to `stdout`,
 - `any.New("file://FILENAME")` returns a client that appends to `FILENAME`,
@@ -223,7 +222,7 @@ For an example see the file [`main/server/smartlog-server.go`](blob/master/main/
 Any client-side invocation like `client.Info("hello world")` leads to a message which has the timestamp. Two settings can be controlled:
 
 - The timestamp format: the default is `"2006-01-02 15:04:05 MST"` (see e.g. the [Go time package](https://pkg.go.dev/time) or [Geeks for geeks](https://www.geeksforgeeks.org/time-formatting-in-golang/)).
-- Whether the time is displayed relative to localtime or to UTC: the default is `false`: the localtime is shown, not the UTC time.
+- Whether the time is displayed relative to localtime or to UTC. The default is `false`: the localtime is shown, not the UTC time.
 
 To change the defaults, simply modify the global variables in `smartlog/msg`:
 
