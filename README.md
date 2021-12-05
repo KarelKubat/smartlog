@@ -12,6 +12,7 @@ Smartlog contains all support code to embed such logging into your programs:
 >
 > - Smartlog understands message types. When messages are generated faster then they can be handled, less important ones are dropped. More important ones are never dropped.
 > - Smartlog keeps the client code short and simple. You are encouraged to log to just one log destination to keep the overhead low; you don't want to slow down your program just because you add logging. If you want to fan out to multiple destinations, you're encouraged to forward messages a smartlog server and to fan out from there.
+> - There is no enforced message format (unlike other loggers that enforce key/value pairs and the such). Want to log JSON structures? Sure, serialize and log them. The recipient will have to deal wth deserializing and interpretation. Unstructured? Also good. The client code should be fast & care-free of such aspects.
 > - If you log to a file, Smartlog will just append to it and it will detect when the logfile disappears - have an external script manage log saving and rotating. That doesn't need to be part of the program code.
 
 ## Concepts
@@ -28,7 +29,7 @@ A program that wishes to provide some logging information uses a Smartlog client
 
 *Philosphical intermezzo.*
 
-*There are tons of discussions on what logging should be aimed at, what it should do, and especially what it should not do. Smartlog isn't as pure as the suggestions by [Dave Cheney](https://dave.cheney.net/2015/11/05/lets-talk-about-logging) but instead chooses the following approach:*
+*There are tons of discussions on what logging should be aimed at, what it should do, and especially what it should not do. Smartlog is neither as pure as the suggestions by [Dave Cheney](https://dave.cheney.net/2015/11/05/lets-talk-about-logging) nor as generic as Go's [log package](https://pkg.go.dev/log). Instead chooses the following approach:*
 
 - *Debug messages can be used during development and should be aimed at programmers. You can leave them in the code; in production they can be turned into no-ops by choosing an appropriate level. Or, if needed, you can turn up the level and see what's going on.*
 - *Informational messages are aimed at users in order to provide relevant (business) data, like "your bank balance looks great today".*
@@ -60,7 +61,8 @@ Here is an example that uses ready-to-run programs in the package:
 
    ```sh
    # Terminal #1
-   # The first positional argument is the server, others are clients. Instructions to smartlog-server:
+   # The first positional argument is the server, others are clients.
+   # Instructions to smartlog-server are:
    # - Accept messages on TCP, port 2022. 
    # - Save them to /tmp/out.txt.
    # - Make them viewable on http://localhost:8080.
@@ -75,7 +77,8 @@ Here is an example that uses ready-to-run programs in the package:
    # Terminal #2
    # - Accept messages on UDP, port 2021. 
    # - Fan these out to `stdout` and forward them to the TCP server in above terminal #1.
-   # udp://2021 means any IP in this machine.
+   # udp://:2021 means any IP in this machine. You could restrict the listener to e.g.
+   # udp://localhost:2021 to make it unavailable outside.
    go run main/server/smartlog-server.go udp://:2021 file://stdout tcp://localhost:2022
    ```
 
@@ -141,7 +144,6 @@ import (
   "smartlog/client/any"
 )
 ...
-var err error
 client.Info("hello world") // goes to stdout
 
 var err error
@@ -171,7 +173,7 @@ if err := cl.Info("hello world"); err != nil {
 
 ### Controlling whether Debug() and Debugf() generate messages
 
-The method `Debug()` (or its sibling ~`f()`) only generates messages when the level which is passed-in the call doesn't exceed the treshold `client.DebugThreshold`.  The default threshold an non-negative nteger (type `uint8`) which defaults to zero. This means that out of the box `Debug(1, msg)`, `Debug(2, msg)` etc. don't produce logging unless `client.DebugThreshold` is modified.
+The method `Debug()` (or its sibling ~`f()`) only generates messages when the level which is passed-in the call doesn't exceed the treshold `client.DebugThreshold`.  The threshold is a non-negative nteger (type `uint8`) which defaults to zero. This means that out of the box `Debug(1, msg)`, `Debug(2, msg)` etc. don't produce logging unless `client.DebugThreshold` is modified.
 
 Example:
 
@@ -184,7 +186,7 @@ include (
 func main() {
   verbosityFlag := flag.Int("verbosity", 0, "verbosity of debug messages")
   flag.Parse()
-  client.DebugThreshold = *verbosityFlag
+  client.DebugThreshold = uint8(*verbosityFlag)
 
   client.Debugf(3, "lorem ipsum")  // suppressed unless -verbosity=3 (or higher) is given
 }
@@ -193,13 +195,13 @@ func main() {
 
 ### The any client and URIs
 
-The module `smartlog/any` can parse a URI and return corresponding Smartlog client. A URI consists of a scheme (`file`, `udp` etc.), followed by `://`, followed by one or more colon-separated parts.
+The module `smartlog/any` can parse a URI and return corresponding smartlog client. A URI consists of a scheme (`file`, `udp` etc.), followed by `://`, followed by one or more colon-separated parts.
 
-- `any.New("file://stdout")` returns a client that writes to `stdout`
-- `any.New("file://FILENAME")` returns a client that appends to `FILENAME`
-- `any.New("http://HOSTNAME:PORT")` returns a client that buffers messages that can be viewed by a browser
-- `any.New("udp://HOSTNAME:PORT"`) returns a client that sends messages to a UDP listener
-- `any.New("tcp://HOSTNAME:PORT"`) is simlar, but used TCP for transport
+- `any.New("file://stdout")` returns a client that writes to `stdout`,
+- `any.New("file://FILENAME")` returns a client that appends to `FILENAME`,
+- `any.New("http://HOSTNAME:PORT")` returns a client that buffers messages that can be viewed by a browser,
+- `any.New("udp://HOSTNAME:PORT"`) returns a client that sends messages to a UDP listener,
+- `any.New("tcp://HOSTNAME:PORT"`) is simlar, but used TCP for transport.
 
 ## Server Code
 
@@ -228,11 +230,13 @@ To change the defaults, simply modify the global variables in `smartlog/msg`:
 ```go
 import (
   "time"
+  "smartlog/client"
   "smartlog/msg"
 )    
 // ...
 msg.DefaultTimeFormat = time.RFC3339 // format: "2006-01-02T15:04:05Z07:00"
 msg.UTCTime = true                   // show the UTC time, not the localtime
+client.Info("hello world")           // uses the new timestamp and shows UTC
 ```
 
 ### Stored messages in HTTP clients
@@ -269,8 +273,10 @@ import (
   "smartlog/client"
 )
 ...
-client.RestartAttempts = 50               // try 50 times
+client.RestartAttempts = 5                // try 5 times
 client.RestartWait     = time.Second / 2  // wait 0.5sec and retry, then 1.0sec and retry, then 1.5sec etc.
 ```
+
+The obvious advantage is that this procedure heals temporary network or server hiccups. The disadvantage is that a permanent unfixable error is detected much later. In the above example it's 0.5s + 1.0s + 1.5s + 2.0s + 2.5s, which is a long time.
 
 > NOTE: A similar mechanism is used by the smartlog server to establish listeners. Upon failed reads it tries to start a new one, `server.RestartAttempts` times, with a wait time of `server.RestartWait` during the first retry, twice as much during the second retry, etc..
