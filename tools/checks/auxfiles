@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+use strict;
+
+my %aux = (
+    'README.md'  => 'is required as a general description',
+    '.gitignore' => 'must be present, ignore at least .git and .gitignore',
+)
+
+die("README.md is missing\n") unless (-f "README.md")
