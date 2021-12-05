@@ -35,7 +35,7 @@ type bufferHandler struct {
 
 func (b *bufferHandler) Write(p []byte) (int, error) {
 	if len(b.client.Buffer) >= KeepMessages {
-		b.client.Buffer = b.client.Buffer[:KeepMessages-1]
+		b.client.Buffer = b.client.Buffer[1:KeepMessages]
 	}
 	b.client.Buffer = append(b.client.Buffer, p)
 	return len(p), nil
