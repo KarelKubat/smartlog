@@ -238,7 +238,7 @@ msg.UTCTime = true                   // show the UTC time, not the localtime
 client.Info("hello world")           // uses the new timestamp and shows UTC
 ```
 
-The default timestamp format `msg.DefaultTimeFormat` applies to all clients that don't set their own preference form(this includes the global client). That means that, if needed, you can set diffeent formats for different clients:
+The default timestamp format `msg.DefaultTimeFormat` applies to all clients that don't set their own preference (this includes the global client). That means that, if needed, you can set diffeent formats for different clients:
 
 ```go
 // See also main/test/clienttimestamps/clienttimestamps.go
