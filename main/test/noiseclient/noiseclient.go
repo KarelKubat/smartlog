@@ -25,7 +25,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.
 `
 
 const usage = `
-Usage: client [FLAGS] DEST
+Usage: noiseclient [FLAGS] DEST
 DEST defines where to send to, e.g. udp://SERVER:PORT or file://this.log
 FLAGS may be:
   -n NR : send at least NR messages

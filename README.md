@@ -86,7 +86,7 @@ Here is an example that uses ready-to-run programs in the package and involves t
    ```sh
    # Terminal #3
    # Use the test client to generate some noise and send it over UDP to port 2021.
-   go run main/testclient/testclient.go udp://localhost:2021
+   go run main/test/noiseclient/noiseclient.go udp://localhost:2021
    ```
 
 After this, you should:
