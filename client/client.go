@@ -97,6 +97,9 @@ func (c *Client) OpenFile() error {
 
 // Called by network clients (tcp:// or udp://).
 func (c *Client) Connect() error {
+	if c.URI.Scheme != uri.TCP && c.URI.Scheme != uri.UDP {
+		return fmt.Errorf("internal foobar, client.Connect isn't meant for %v", c)
+	}
 	var err error
 	for i := 0; i < RestartAttempts; i++ {
 		time.Sleep(RestartWait * time.Duration(i))
