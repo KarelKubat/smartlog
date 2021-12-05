@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"smartlog/client"
 	"smartlog/client/any"
 
 	"smartlog/server"
@@ -25,15 +24,6 @@ FLAGS may be:
 `
 
 func main() {
-	// Generic error catcher
-	var err error
-	defer func() {
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-	}()
-
 	// Supported flag(s)
 	flagS := flag.Duration("s", 0, "stop server after stated duration, 0 = serve forever")
 
@@ -50,11 +40,8 @@ func main() {
 	}
 
 	// Start serving
-	var srv *server.Server
-	srv, err = server.New(flag.Arg(0))
-	if err != nil {
-		return
-	}
+	srv, err := server.New(flag.Arg(0))
+	checkErr(err)
 	if *flagS > 0 {
 		go func() {
 			time.Sleep(*flagS)
@@ -64,12 +51,16 @@ func main() {
 
 	// Add clients from the commandline
 	for _, uri := range flag.Args()[1:] {
-		var cl *client.Client
-		cl, err = any.New(uri)
-		if err != nil {
-			return
-		}
+		cl, err := any.New(uri)
+		checkErr(err)
 		srv.AddClient(cl)
 	}
-	err = srv.Serve()
+	checkErr(srv.Serve())
+}
+
+func checkErr(err error) {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 }
