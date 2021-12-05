@@ -20,13 +20,3 @@ func New(u *uri.URI) (*client.Client, error) {
 	}
 	return c, nil
 }
-
-func init() {
-	client.DefaultClient = &client.Client{
-		Writer: os.Stdout,
-		URI: &uri.URI{
-			Scheme: uri.File,
-			Parts:  []string{"stdout"},
-		},
-	}
-}
