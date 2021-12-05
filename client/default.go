@@ -1,6 +1,20 @@
 package client
 
+import (
+	"os"
+
+	"smartlog/uri"
+)
+
 var DefaultClient *Client
+
+func Debug(lev uint8, msg string) error {
+	return DefaultClient.Debug(lev, msg)
+}
+
+func Debugf(lev uint8, format string, args ...interface{}) error {
+	return DefaultClient.Debugf(lev, format, args...)
+}
 
 func Info(msg string) error {
 	return DefaultClient.Info(msg)
@@ -24,4 +38,14 @@ func Fatal(msg string) error {
 
 func Fatalf(format string, args ...interface{}) error {
 	return DefaultClient.Fatalf(format, args...)
+}
+
+func init() {
+	DefaultClient = &Client{
+		Writer: os.Stdout,
+		URI: &uri.URI{
+			Scheme: uri.File,
+			Parts:  []string{"stdout"},
+		},
+	}
 }
