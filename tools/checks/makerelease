@@ -5,9 +5,19 @@ use File::Spec;
 
 # Purpose: create a release for upload.
 
-my $path = File::Spec->rel2abs(__FILE__);
-$path =~ s{tools/makerelease$}{};
-chdir($path) or die("cannot cd to $path: $!\n");
+my $orgpath = File::Spec->rel2abs(__FILE__);
+my $path = $orgpath;
+if ($path !~ m{/.git/hooks/}) {
+    $path =~ s{/.git/hooks/.*}{};
+} elsif ($path =~ m{/tools/}) {
+    $path =~ s{/tools/.*}{};
+    if ($orgpath =~ m{pre-}) {
+        warn("this should be installed to .git/hooks/{pre-push}\n")
+    }
+} else {
+    die("failed to find top of repository\n")
+}
+chdir($path) and die("cannot cd to $path: $!\n");
 
 system("go build goto-meet.go")
   and die("failed to make binary");
