@@ -224,7 +224,7 @@ Any client-side invocation like `client.Info("hello world")` leads to a message 
 - The timestamp format: the default is `"2006-01-02 15:04:05 MST"` (see e.g. the [Go time package](https://pkg.go.dev/time) or [Geeks for geeks](https://www.geeksforgeeks.org/time-formatting-in-golang/)).
 - Whether the time is displayed relative to localtime or to UTC. The default is `false`: the localtime is shown, not the UTC time.
 
-To change the defaults, simply modify the global variables in `smartlog/msg`:
+To change the defaults, simply modify the global variables in the package `"smartlog/msg"`:
 
 ```go
 import (
@@ -236,6 +236,26 @@ import (
 msg.DefaultTimeFormat = time.RFC3339 // format: "2006-01-02T15:04:05Z07:00"
 msg.UTCTime = true                   // show the UTC time, not the localtime
 client.Info("hello world")           // uses the new timestamp and shows UTC
+```
+
+The default timestamp format `msg.DefaultTimeFormat` applies to all clients that don't set their own preference form(this includes the global client). That means that, if needed, you can set diffeent formats for different clients:
+
+```go
+// See also main/test/clienttimestamps/clienttimestamps.go
+import (
+  "time"
+  "smartlog/client/any"
+)
+... 
+cl1, err := any.New("file://stdout")
+checkErr(err)
+
+cl2, err := any.New("file://stdout")
+checkErr(err)
+cl2.TimeFormat = time.RFC3339
+
+cl1.Info("hello world from client #1")  // 2021-12-05 12:31:00 CET | I | hello from client #1
+cl2.Info("hello world from client #2")  // 2021-12-05T12:31:00+01:00 | I | hello from client #2
 ```
 
 ### Stored messages in HTTP clients
