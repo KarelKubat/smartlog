@@ -47,6 +47,7 @@ Client types define how a message should be handled. Smartlog supports the follo
 - Forwarding clients send messages to a remote server. Smartlog supports UDP and TCP:
   - UDP is faster, but the network transmission is not guaranteed.
   - TCP is slower, but guaranteed.
+- There is a client for loadtesting that discards messages (the 'none' client).  
 
 All client types except the forwarding clients can be used stand-alone, i.e., just as a part of your program. Forwarding clients normally require a Smartlog server (in test scenarios `nc` or `netcat` can be used).
 
@@ -147,7 +148,7 @@ client.Info("hello world") // goes to stdout
 
 var err error
 client.DefaulClient, err = any.New("udp://localhost:2021"), err != nil { 
-  handleError(err) 
+  handleError(err)
 }
 
 client.Info("hello world") // now dispatched over UDP
@@ -202,6 +203,8 @@ The module `smartlog/any` can parse a URI and return a corresponding smartlog cl
 - `any.New("udp://HOSTNAME:PORT"`) returns a client that sends messages to a UDP listener,
 - `any.New("tcp://HOSTNAME:PORT"`) is simlar, but used TCP for transport.
 
+The loadtesting client that discards messages can be constructed using `any.New("none://WHATEVER")`.
+
 ## Server Code
 
 Chances are that you won't need to include code for the smartlog server in your programs. The binary `smartlog-server` is usually sufficient. However, in short:
@@ -238,7 +241,7 @@ msg.UTCTime = true                   // show the UTC time, not the localtime
 client.Info("hello world")           // uses the new timestamp and shows UTC
 ```
 
-The default timestamp format `msg.DefaultTimeFormat` applies to all clients that don't set their own preference (this includes the global client). That means that, if needed, you can set diffeent formats for different clients:
+The default timestamp format `msg.DefaultTimeFormat` applies to all clients that don't set their own preference (this includes the global client). That means that, if needed, you can set different formats for different clients:
 
 ```go
 // See also main/test/clienttimestamps/clienttimestamps.go
@@ -275,6 +278,8 @@ It should be noted that if you need to do this, then maybe you should not log ju
 - Instantiating a forwarding client over TCP or UDP,
 - Having a Smartlog server accept these messages,
 - Configuring it to fan out the messages to both an HTTP and a file client.
+
+You can even start a server inside your program just for the purpose of fanning out. See `main/test/load/load.go` for an example.
 
 ### Finding dropped network links
 
