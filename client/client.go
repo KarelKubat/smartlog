@@ -109,17 +109,6 @@ func (c *Client) Connect() error {
 	return fmt.Errorf("%v: failed to (re)connect: %v", c, err)
 }
 
-func (c *Client) timeStamp() []byte {
-	now := time.Now()
-	var stamp string
-	if c.TimeFormat == "" {
-		stamp = now.String()
-	} else {
-		stamp = now.Format(c.TimeFormat)
-	}
-	return []byte(stamp)
-}
-
 func (c *Client) sendToWriter(lev msg.MsgType, message string) error {
 	if c.URI.Scheme == uri.None {
 		return nil
