@@ -6,4 +6,7 @@ my %aux = (
     '.gitignore' => 'must be present, ignore at least .git and .gitignore',
 )
 
-die("README.md is missing\n") unless (-f "README.md")
+for my $f (keys(%aux)) {
+    next if (-f $f);
+    die("$f is missing: it ", $aux{$f}, "\n");
+}
