@@ -1,0 +1,49 @@
+#!/usr/bin/env perl
+use strict;
+use File::Basename;
+use File::Spec;
+
+# Purpose: run some sanity checks before `git` actions.
+
+my %checks_to_run = (
+    'pre-push' => [qw(allcommitted)],
+);
+my $orgpath = File::Spec->rel2abs(__FILE__);
+my $hook = $orgpath;
+$hook =~ s{.*/}{};
+
+my $top = $orgpath;
+if ($top =~ m{.git/hooks/}) {
+    $top =~ s{.*.git/hooks/.*}{};
+} elsif ($top =~ m{/tools/}) {
+    $top =~ s{.*/tools/.*}{};    
+    if ($orgpath =~ m{pre-}) {
+        warn("\nThis should be installed to .git/hooks/ using:\n");
+        for my $k (keys(%checks_to_run)) {
+            warn("  ln -s tools/hooks/$hook .git/hooks/$k\n");
+        }
+        warn("\n");
+    }
+} else {
+    die("failed to find top of repository\n")
+}
+if ($top ne "") {
+    chdir($top) and die("cannot cd to $top: $!\n");
+}
+
+my @hooks_to_run;
+if ($hook eq 'pre-hook') {
+    @hooks_to_run = keys(%checks_to_run);
+} else {
+    @hooks_to_run = ($hook);
+}
+
+for $hook (@hooks_to_run) {
+    my @checks = @{$checks_to_run{$hook}}
+        or die("misconfiguration in $orgpath: no checks configured for hook $hook\n");
+
+    for my $check (@checks) {
+        my $cmd = "tools/checks/$check";
+        system($cmd) and die("$hook hook failed on $cmd\n");
+    }
+}
