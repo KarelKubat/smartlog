@@ -14,9 +14,9 @@ my $hook = $orgpath;
 $hook =~ s{.*/}{};
 
 if ($orgpath =~ m{tools/}) {
-    warn("\nThis should be installed in .git. Run:\n");
+    warn("\nThis should be installed in .git/hooks. You can always rerun:\n");
     for my $k (keys(%checks_to_run)) {
-        warn("  ln -s tools/hooks/$hook .git/hooks/$k\n");
+        warn("  ln -sf $orgpath .git/hooks/$k\n");
     }
     warn("I'll just run all pre- tests that I know of.\n\n");
 }
