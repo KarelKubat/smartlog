@@ -29,7 +29,7 @@ if ($hook eq 'pre-hook') {
 }
 
 for $hook (@hooks_to_run) {
-    print("===== $hook =====\n");
+    print("===== $hook hook started =====\n");
     my @checks = @{$checks_to_run{$hook}}
         or die("misconfiguration in $orgpath: no checks configured for hook $hook\n");
 
@@ -37,4 +37,5 @@ for $hook (@hooks_to_run) {
         my $cmd = "tools/checks/$check";
         system($cmd) and die("$hook hook failed on $cmd\n");
     }
+    print("===== $hook hook complete =====\n");
 }
