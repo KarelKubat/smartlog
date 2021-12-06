@@ -2,6 +2,8 @@
 
 Smartlog is a yet-another-package for Go to make logging easier. (Well, easier for me, it's the way I like it.) Log statements can be processed locally (to `stdout` or a file), made visible in a webpage, or sent remotely to a server over TCP or UDP for further handling.
 
+***Found a bug, got a question or a request? Open an [issue](https://github.com/KarelKubat/smartlog/issues/new)! I will react as fast as I can, time permitting.***
+
 Smartlog contains all support code to embed such logging into your programs:
 
 - To embed client code into your programs that need to emit log messages,
