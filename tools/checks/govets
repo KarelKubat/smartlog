@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+use strict;
+use File::Basename;
+use File::Find;
+use File::Spec;
+
+# Purpose: check that every .go file has a test and that it works.
+
+my @gosrc;
+
+sub wanted {
+    my $f = $File::Find::name;
+    $f =~ s{^./}{};
+
+    # don't vet test files.
+    return if ($f =~ m{_test.go$});
+
+    # ... but vet other Go sources.
+    push(@gosrc, $f) if ($f =~ m{.go$});
+}
+
+find({
+    wanted => \&wanted,
+    no_chdir => 1,
+},  '.');
+
+print("govets: vetting Go sources\n");
+my $goterr;
+for my $f (@gosrc) {
+    my @lines;
+    open(my $if, "go vet $f 2>&1 |") or die("cannot start `go vet`: $!'\n");
+    for my $line (<$if>) {
+        next if ($line =~ m{^#});
+        push(@lines, "    $line");
+    }
+    if (! close($if)) {
+        $goterr = 1;
+        for my $l (@lines) {
+            print($l);
+        }
+    }
+}
+
+die("govets: above vetting failed\n") if ($goterr);

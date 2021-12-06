@@ -6,8 +6,8 @@ use File::Spec;
 # Purpose: run some sanity checks before `git` actions.
 
 my %checks_to_run = (
-    'pre-push'   => [ qw(allcommitted) ],
     'pre-commit' => [ qw(auxfiles gotests) ],
+    'pre-push'   => [ qw(allcommitted govets) ],
 );
 my $orgpath = File::Spec->rel2abs(__FILE__);
 my $hook = $orgpath;
