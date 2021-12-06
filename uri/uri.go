@@ -75,17 +75,21 @@ func New(s string) (*URI, error) {
 			}
 			supported += fmt.Sprintf("%s://...", key)
 		}
-		return nil, fmt.Errorf("%v: unsupported scheme %q, supported: %v", s, top[0], supported)
+		return nil, fmt.Errorf("%v has an unsupported scheme %q, supported: %v", s, top[0], supported)
 	}
 	uri.Scheme = valid.uriType
 	uri.Parts = strings.Split(top[1], ":")
-	if len(uri.Parts) != valid.parts {
-		return nil, fmt.Errorf("%v: has %v colon-separated part(s), supported: %v", s, len(uri.Parts), valid.description)
+	nParts := len(uri.Parts)
+	if nParts > 0 && uri.Parts[nParts-1] == "" {
+		nParts--
+	}
+	if nParts != valid.parts {
+		return nil, fmt.Errorf("%v has %v colon-separated part(s), supported: %v", s, nParts, valid.description)
 	}
 	if len(uri.Parts) > 1 {
 		_, err := strconv.Atoi(uri.Parts[1])
 		if err != nil {
-			return nil, fmt.Errorf("%v: port %q is not a number: %v", s, uri.Parts[1], err)
+			return nil, fmt.Errorf("%v has an invalid port %q (not a number: %v)", s, uri.Parts[1], err)
 		}
 	}
 	return uri, nil
