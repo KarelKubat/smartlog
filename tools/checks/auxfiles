@@ -3,10 +3,11 @@ use strict;
 
 my %aux = (
     'README.md'  => 'is required as a general description',
-    '.gitignore' => 'must be present, ignore at least .git and .gitignore',
+    '.gitignore' => 'must be present to ignore at least .git and .gitignore',
 );
 
 for my $f (keys(%aux)) {
     next if (-f $f);
-    die("$f is missing: it ", $aux{$f}, "\n");
+    die("auxfiles: $f is missing: it ", $aux{$f}, "\n");
 }
+print("auxfiles: all helpfiles accounted for\n");

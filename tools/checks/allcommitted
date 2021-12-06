@@ -11,8 +11,10 @@ while (my $line = <$if>) {
     $all_committed = 1 if ($line =~ m{nothing to commit, working tree clean});
 }
 if (not $all_committed) {
+    warn("allcommitted: not everything is locally committed\n");
     for my $line (@lines) {
-        print($line);
+        print("    $line");
     }
-    die("not everything is locally committed\n");
+    exit(1);
 }
+print("allcommitted: everything is locally committed\n");

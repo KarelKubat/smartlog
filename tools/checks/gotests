@@ -6,7 +6,7 @@ use File::Spec;
 
 # Purpose: check that every .go file has a test and that it works.
 
-my %test_in_dir;
+my (%test_in_dir, $test_found);
 
 sub wanted {
     my $f = $File::Find::name;
@@ -16,6 +16,7 @@ sub wanted {
 
     if ($f =~ m{_test.go$}) {
         $test_in_dir{$path} = 1;
+        $test_found = 1;
         return;
     }
     if ($f =~ m{.go$}) {
@@ -29,15 +30,16 @@ find({
     no_chdir => 1,
 },  '.');
 
-my $test_found;
 for my $dir (sort(keys(%test_in_dir))) {
-    if ($test_in_dir{$dir}) {
-        print("GOOD: $dir has tests, good.\n");
-        $test_found = 1;
-    } else {
-        warn("BAD:  $dir contains no tests, you should add them!\n");
+    if (!$test_in_dir{$dir}) {
+        warn("gotests: $dir contains no tests, you should add them\n");
     }
 }
 if ($test_found) {
-    system("go test ./...") and die("go test(s) failed");
+    print("gotests: running all tests\n");
+    open(my $if, "go test ./... |") or die("cannot start `go test`\n");
+    while (my $line = <$if>) {
+        print("    $line");
+    }
+    close($if) or die("go test(s) failed\n");
 }
