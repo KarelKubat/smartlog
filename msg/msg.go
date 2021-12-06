@@ -25,11 +25,11 @@ var (
 type MsgType int
 
 const (
-	Debug MsgType = iota
-	Info
-	Warn
-	Fatal
-	Unknown
+	Debug   MsgType = iota // debug level: keep at zero for the tests (or fix msg_test.go)
+	Info                   // info level
+	Warn                   // warn: won't be dropped
+	Fatal                  // terminal: won't be dropped and kills
+	Unknown                // keep as last (sentinel) for the tests
 )
 
 var tagForType = map[MsgType]byte{
