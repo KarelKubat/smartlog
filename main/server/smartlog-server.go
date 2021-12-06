@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -37,6 +38,13 @@ Where:
 )
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// Supported flag(s)
 	flagS := flag.Duration("s", 0, "stop server after stated duration, 0 = serve forever")
 
@@ -46,11 +54,14 @@ func main() {
 	// We need at least 2 positional arguments, or show usage and stop.
 	if flag.NArg() < 2 {
 		usageFunc()
+		return errors.New("(not enough arguments)")
 	}
 
 	// Start serving
 	srv, err := server.New(flag.Arg(0))
-	checkErr(err)
+	if err != nil {
+		return err
+	}
 	if *flagS > 0 {
 		go func() {
 			time.Sleep(*flagS)
@@ -61,21 +72,16 @@ func main() {
 	// Add clients from the commandline
 	for _, uri := range flag.Args()[1:] {
 		cl, err := any.New(uri)
-		checkErr(err)
+		if err != nil {
+			return err
+		}
 		srv.AddClient(cl)
 	}
-	checkErr(srv.Serve())
-}
-
-func checkErr(err error) {
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
+	return srv.Serve()
 }
 
 func usageFunc() {
 	fmt.Fprintf(os.Stderr, usage)
 	flag.PrintDefaults()
-	os.Exit(1)
+	fmt.Fprintln(os.Stdout)
 }
