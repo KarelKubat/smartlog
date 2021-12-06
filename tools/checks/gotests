@@ -38,8 +38,14 @@ for my $dir (sort(keys(%test_in_dir))) {
 if ($test_found) {
     print("gotests: running all tests\n");
     open(my $if, "go test ./... |") or die("cannot start `go test`\n");
+    my @lines;
     while (my $line = <$if>) {
-        print("    $line");
+        push(@lines, "    $line");
     }
-    close($if) or die("go test(s) failed\n");
+    if (! close($if)) {
+        for my $l (@lines) {
+            print($l);
+        }
+        die("go test(s) failed\n");
+    }
 }
