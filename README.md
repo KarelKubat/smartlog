@@ -244,7 +244,7 @@ import (
 // ...
 msg.DefaultTimeFormat = time.RFC3339 // format: "2006-01-02T15:04:05Z07:00"
 msg.UTCTime = true                   // show the UTC time, not the localtime
-client.Info("hello world")           // uses the new timestamp and shows UTC
+client.Info("hello world")           // uses the new format and shows UTC
 ```
 
 The default timestamp format `msg.DefaultTimeFormat` applies to all clients that don't set their own preference (this includes the global client). That means that, if needed, you can set different formats for different clients:
