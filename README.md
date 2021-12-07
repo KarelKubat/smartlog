@@ -256,10 +256,10 @@ import (
   "smartlog/client/any"
 )
 ... 
-cl1, err := any.New("file://stdout")
+cl1, err := any.New("file://file1.log")
 checkErr(err)
 
-cl2, err := any.New("file://stdout")
+cl2, err := any.New("file://file2.log")
 checkErr(err)
 cl2.TimeFormat = time.RFC3339
 
