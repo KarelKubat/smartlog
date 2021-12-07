@@ -222,7 +222,7 @@ The server is in the module `"smartlog/server"`.  Using it is a has multiple ste
 - Starting `srv.Serve()`.
 - The server may be shut down using `srv.Close()`.
 
-For an example see the file [`main/server/smartlog-server.go`](blob/master/main/server/smartlog-server.go).
+For an example see the file `main/server/smartlog-server.go`](https://github.com/KarelKubat/smartlog/blob/master/main/server/smartlog-server.go).
 
 ## Tweaks
 
