@@ -293,7 +293,10 @@ When networked clients detect a problem while trying to send a message to a smar
 
 - It's retried `client.RestartAttempts` times
 - Between each retry there is an increased waiting period, which is `client.RestartWait` during the first retry, twice as long during the second retry, three times as long during the third, and so on.
-- When all attempts are exhausted reconnecting fails, sending the message fails, and `client.Info()` or whichever funtion was invoked returns an error.
+- When all attempts are exhausted, then:
+  - Reconnecting fails,
+  - Sending the message fails, and
+  - `client.Info()` or whichever function was invoked returns an error.
 
 The actual numbers can be found in `client/client.go`. If you need to adjust them:
 
