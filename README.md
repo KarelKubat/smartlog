@@ -231,7 +231,7 @@ For an example see the file [`main/server/smartlog-server.go`](https://github.co
 Any client-side invocation like `client.Info("hello world")` leads to a message which has the timestamp. Two settings can be controlled:
 
 - The timestamp format: the default is `"2006-01-02 15:04:05 MST"` (see e.g. the [Go time package](https://pkg.go.dev/time) or [Geeks for geeks](https://www.geeksforgeeks.org/time-formatting-in-golang/)).
-- Whether the time is displayed relative to localtime or to UTC. The default is `false`: the localtime is shown, not the UTC time.
+- Whether the time is displayed relative to localtime. The alternative is relative or to UTC, and he default is `false`: the localtime is shown, not the UTC time.
 
 To change the defaults, simply modify the global variables in the package `"smartlog/msg"`:
 
