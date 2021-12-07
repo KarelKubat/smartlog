@@ -6,37 +6,31 @@ use File::Spec;
 
 # Purpose: check that every .go file has a test and that it works.
 
-my @gosrc;
-
-sub wanted {
-    my $f = $File::Find::name;
-    $f =~ s{^./}{};
-
-    # don't vet test files.
-    return if ($f =~ m{_test.go$});
-
-    # ... but vet other Go sources.
-    push(@gosrc, $f) if ($f =~ m{.go$});
+# Find the packages in this repo.
+my %gomods;
+open(my $if, "go test ./... |") or die("cannot start `go test`: $!\n");
+for my $line (<$if>) {
+    my @parts = split(/\t/, $line);
+    my $mod = $parts[1];
+    next unless ($mod);
+    $gomods{$mod} = 1;
 }
 
-find({
-    wanted => \&wanted,
-    no_chdir => 1,
-},  '.');
-
-print("govets: vetting Go sources\n");
+# Check the packages.
 my $goterr;
-for my $f (@gosrc) {
+for my $mod (sort(keys(%gomods))) {
+    my $cmd = "go vet $mod";
+    open(my $if, "$cmd 2>&1 |") or die("cannot start `go vet`: $!\n");
     my @lines;
-    open(my $if, "go vet $f 2>&1 |") or die("cannot start `go vet`: $!'\n");
     for my $line (<$if>) {
         next if ($line =~ m{^#});
         push(@lines, "    $line");
     }
     if (! close($if)) {
+        print("govets: $cmd failed\n");
         $goterr = 1;
-        for my $l (@lines) {
-            print($l);
+        for my $line (@lines) {
+            print($line);
         }
     }
 }
