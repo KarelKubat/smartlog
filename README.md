@@ -46,7 +46,7 @@ Client types define how a message should be handled. Smartlog supports the follo
 - File-based clients dump messages into a file by appending to it. The file may disappear while your program is running; in that case, smartlog will simply re-create it.
 - A special case is the filename `stdout`, which instructs smartlog to send messages to the *stdout* stream.
 - HTTP clients start an HTTP server where messages can be viewed.
-- Forwarding clients send messages to a remote server. Smartlog supports UDP and TCP:
+- Forwarders (network clients) send messages to a remote server. Smartlog supports UDP and TCP:
   - UDP is faster, but the network transmission is not guaranteed.
   - TCP is slower, but guaranteed.
 - There is a client for loadtesting that discards messages (the 'none' client).  
