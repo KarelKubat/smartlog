@@ -139,8 +139,8 @@ func checkErr(err error) {
   }
 }
 ...
-checkErr(client.Info("hello world"))
-checkErr(client.DefaultClient.Info("hello world"))
+checkErr(client.Info("hello world"))               // client.Info() sends to the DefaultClient
+checkErr(client.DefaultClient.Info("hello world")) // same thing, explicit
 ```
 
 The default client sends its output to `stdout`. It can be redefined to emit messages to another destination:
