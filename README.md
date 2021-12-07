@@ -44,7 +44,7 @@ Smartlog servers have a queue for incoming messages. When this queue fills up (i
 Client types define how a message should be handled. Smartlog supports the following types:
 
 - File-based clients dump messages into a file by appending to it. The file may disappear while your program is running; in that case, smartlog will simply re-create it.
-- A special case is the filename `stdout`, which instructs smartlog to send messges to the console.
+- A special case is the filename `stdout`, which instructs smartlog to send messages to the *stdout* stream.
 - HTTP clients start an HTTP server where messages can be viewed.
 - Forwarding clients send messages to a remote server. Smartlog supports UDP and TCP:
   - UDP is faster, but the network transmission is not guaranteed.
