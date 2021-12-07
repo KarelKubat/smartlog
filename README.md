@@ -307,7 +307,8 @@ import (
 )
 ...
 client.RestartAttempts = 5                // try 5 times
-client.RestartWait     = time.Second / 2  // wait 0.5sec and retry, then 1.0sec and retry, then 1.5sec etc.
+client.RestartWait     = time.Second / 2  // wait 0.5sec and retry, then 1.0sec and retry, 
+                                           // then 1.5sec, then 2.0sec etc.
 ```
 
 The obvious advantage is that this procedure heals temporary network or server hiccups. The disadvantage is that a permanent unfixable error is detected much later. In the above example it's 0.5s + 1.0s + 1.5s + 2.0s + 2.5s, which is a long time.
