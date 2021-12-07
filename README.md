@@ -68,8 +68,8 @@ Here is an example that uses ready-to-run programs in the package and involves t
    # - Accept messages on TCP, port 2022. 
    # - Save them to /tmp/out.txt.
    # - Make them viewable on http://localhost:8080.
-   # tcp://:2022 means any IP on this machine. The filename /tmp/out.txt leads to three slashes in
-   # file:///tmp/out.txt; file:// already needs 2.
+   # tcp://:2022 means any IP on this machine. The filename /tmp/out.txt leads to three
+   # slashes in file:///tmp/out.txt; file:// already needs 2.
    go run main/server/smartlog-server.go tcp://:2022 file:///tmp/out.txt http://localhost:8080
    ```
 
@@ -133,9 +133,14 @@ The following invocations are equivalent:
 import (
   "smartlog/client"
 )
+func checkErr(err error) {
+  if err != nil {
+    ... // do something useful
+  }
+}
 ...
-client.Info("hello world")
-client.DefaultClient.Info("hello world")
+checkErr(client.Info("hello world"))
+checkErr(client.DefaultClient.Info("hello world"))
 ```
 
 The default client sends its output to `stdout`. It can be redefined to emit messages to another destination:
@@ -146,14 +151,16 @@ import (
   "smartlog/client/any"
 )
 ...
-client.Info("hello world") // goes to stdout
+checkErr(client.Info("hello world")) // goes to stdout
 
 var err error
-client.DefaulClient, err = any.New("udp://localhost:2021"), err != nil { 
-  handleError(err)
-}
+client.DefaultClient, err := any.New("file://program.log")
+checkErr(err)
+checkErr(client.Info("hello world")) // appends to `program.log`
 
-client.Info("hello world") // now dispatched over UDP
+client.DefaulClient, err = any.New("udp://localhost:2021")
+checkErr(err)
+checkErr(client.Info("hello world")) // now dispatched over UDP
 ```
 
 Non-global clients can be similarly constructed. That way your program can instantiate multiple loggers for multiple purposes.
@@ -165,12 +172,8 @@ import (
 )
 ...
 cl, err := any.New("udp://localhost:2021")
-if err != nil { 
-  handleError(err)
-}
-if err := cl.Info("hello world"); err != nil {
-  handleError(err)
-}
+checkErr(err)
+checkErr(cl.Info("hello world"))
 ```
 
 ### Controlling whether Debug() and Debugf() generate messages
@@ -191,6 +194,7 @@ func main() {
   client.DebugThreshold = uint8(*verbosityFlag)
 
   client.Debugf(3, "lorem ipsum")  // suppressed unless -verbosity=3 (or higher) is given
+                                   // ... and you might want to check the returned error
 }
 ...
 ```
