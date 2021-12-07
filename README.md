@@ -313,4 +313,4 @@ client.RestartWait     = time.Second / 2  // wait 0.5sec and retry, then 1.0sec 
 
 The obvious advantage is that this procedure heals temporary network or server hiccups. The disadvantage is that a permanent unfixable error is detected much later. In the above example it's 0.5s + 1.0s + 1.5s + 2.0s + 2.5s, which is a long time.
 
-> NOTE: A similar mechanism is used by the smartlog server to establish listeners. Upon failed reads it tries to start a new one, `server.RestartAttempts` times, with a wait time of `server.RestartWait` during the first retry, twice as much during the second retry, etc..
+> NOTE: A similar mechanism is used by the smartlog server to establish listeners. Upon failed reads it tries to start a new one, `server.RestartAttempts` times, with a wait time of `server.RestartWait` during the first retry, twice as much during the second retry, etc.. You can adjust these values when constructing smartlog a server.
