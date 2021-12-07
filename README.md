@@ -217,7 +217,7 @@ Chances are that you won't need to include code for the smartlog server in your 
 
 The server is in the module `"smartlog/server"`.  Using it is a has multiple steps:
 
-- Instantiation using `srv, err := erver.New(uriString)`
+- Instantiation using `srv, err := server.New(uriString)`
 - Adding at least one fanout client using `srv.AddClient(someClient)`
 - Starting `srv.Serve()`.
 - The server may be shut down using `srv.Close()`.
