@@ -86,7 +86,7 @@ func (s *Server) Serve() error {
 			return fmt.Errorf("%v: UDP server stopped: %v", s, err)
 		}
 	default:
-		errors.New("internal foobar, unhandled case in server.Serve")
+		return errors.New("internal foobar, unhandled case in server.Serve")
 	}
 	return nil
 }
