@@ -51,7 +51,7 @@ Client types define how a message should be handled. Smartlog supports the follo
   - TCP is slower, but guaranteed.
 - There is a client for loadtesting that discards messages (the `none` client).  
 
-All client types except the forwarding clients can be used stand-alone, i.e., just as a part of your program. Forwarding clients normally require a Smartlog server (in test scenarios `nc` or `netcat` can be used).
+All client types except the forwarding clients can be used stand-alone, i.e., just as a part of your program. Forwarders need to connect to a a Smartlog server (in test scenarios `nc` or `netcat` can be used).
 
 ### Smartlog servers need smartlog clients too
 
