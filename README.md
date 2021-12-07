@@ -285,7 +285,7 @@ It should be noted that if you need to do this, then maybe you should not log ju
 - Having a Smartlog server accept these messages,
 - Configuring it to fan out the messages to both an HTTP and a file client.
 
-You can even start a server inside your program just for the purpose of fanning out. See `main/test/load/load.go` for an example.
+You can even start a server inside your program just for the purpose of fanning out. See [`main/test/load/load.go`](https://github.com/KarelKubat/smartlog/blob/master/main/test/load/load.go) for an example.
 
 ### Finding dropped network links
 
