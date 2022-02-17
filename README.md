@@ -13,7 +13,7 @@ Smartlog contains all support code to embed such logging into your programs:
 > Smartlog tries to be smart in the following design choices:
 >
 > - Smartlog understands message types. When messages are generated faster then they can be handled, less important ones are dropped. More important ones are never dropped.
-> - Smartlog keeps the client code short and simple. You are encouraged to log to just one log destination to keep the overhead low; you don't want to slow down your program just because you add logging. If you want to fan out to multiple destinations, you're encouraged to forward messages a smartlog server and to fan out from there.
+> - Smartlog keeps the client code short and simple. You are encouraged to log to just one log destination to keep the overhead low; you don't want to slow down your program just because you add logging. If you want to fan out to multiple destinations, you're encouraged to forward messages to a smartlog server and to fan out from there.
 > - There is no enforced message format (unlike other loggers that enforce key/value pairs and the such). Want to log JSON structures? Sure, serialize and log them. The recipient will have to deal wth deserializing and interpretation. Unstructured? Also good. The client code should be fast & care-free of such aspects.
 > - If you log to a file, Smartlog will just append to it and it will detect when the logfile disappears - have an external script manage log saving and rotating. That doesn't need to be part of the program code.
 
@@ -97,6 +97,10 @@ After this, you should:
 - See the sent messages in terminal #2 (because of the client `file://stdout`)
 - See the same messages in `/tmp/out/txt` (because of the client `file:///tmp/out.txt`)
 - See the same messages when you point your browser to `http://localhost:8080`.
+
+The message flow is illustrated in the below figure.
+
+![Message flow](servers-and-clients.png)
 
 If you want to see it slower, rerun in the third terminal:
 
