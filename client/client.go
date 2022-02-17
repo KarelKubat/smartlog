@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"smartlog/msg"
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/msg"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 var (

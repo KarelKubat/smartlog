@@ -3,7 +3,7 @@ package client
 import (
 	"os"
 
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 var DefaultClient *Client

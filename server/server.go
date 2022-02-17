@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"smartlog/client"
-	"smartlog/linebuf"
-	"smartlog/msg"
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/client"
+	"github.com/KarelKubat/smartlog/linebuf"
+	"github.com/KarelKubat/smartlog/msg"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 const (

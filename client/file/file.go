@@ -3,8 +3,8 @@ package file
 import (
 	"os"
 
-	"smartlog/client"
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/client"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 func New(u *uri.URI) (*client.Client, error) {

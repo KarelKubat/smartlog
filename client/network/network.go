@@ -1,8 +1,8 @@
 package network
 
 import (
-	"smartlog/client"
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/client"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 func New(ur *uri.URI) (*client.Client, error) {

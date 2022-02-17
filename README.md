@@ -131,7 +131,7 @@ The following invocations are equivalent:
 
 ```go
 import (
-  "smartlog/client"
+  "github.com/KarelKubat/smartlog/client"
 )
 func checkErr(err error) {
   if err != nil {
@@ -147,8 +147,8 @@ The default client sends its output to `stdout`. It can be redefined to emit mes
 
 ```go
 import (
-  "smartlog/client"
-  "smartlog/client/any"
+  "github.com/KarelKubat/smartlog/client"
+  "github.com/KarelKubat/smartlog/client/any"
 )
 ...
 checkErr(client.Info("hello world")) // goes to stdout
@@ -167,8 +167,8 @@ Non-global clients can be similarly constructed. That way your program can insta
 
 ```go
 import (
-  "smartlog/client"
-  "smartlog/client/any"
+  "github.com/KarelKubat/smartlog/client"
+  "github.com/KarelKubat/smartlog/client/any"
 )
 ...
 cl, err := any.New("udp://localhost:2021")
@@ -185,7 +185,7 @@ Example:
 ```go
 include (
   "flag"
-  "smartlog/client"
+  "github.com/KarelKubat/smartlog/client"
 )
 
 func main() {
@@ -215,7 +215,7 @@ The loadtesting client that discards messages can be constructed using `any.New(
 
 Chances are that you won't need to include code for the smartlog server in your programs. The binary `smartlog-server` is usually sufficient. However, in short:
 
-The server is in the module `"smartlog/server"`.  Using it is a has multiple steps:
+The server is in the module `"github.com/KarelKubat/smartlog/server"`.  Using it is a has multiple steps:
 
 - Instantiation using `srv, err := server.New(uriString)`
 - Adding at least one fanout client using `srv.AddClient(someClient)`
@@ -233,13 +233,13 @@ Any client-side invocation like `client.Info("hello world")` leads to a message 
 - The timestamp format: the default is `"2006-01-02 15:04:05 MST"` (see e.g. the [Go time package](https://pkg.go.dev/time) or [Geeks for geeks](https://www.geeksforgeeks.org/time-formatting-in-golang/)).
 - Whether the time is displayed relative to localtime. The alternative is relative or to UTC, and he default is `false`: the localtime is shown, not the UTC time.
 
-To change the defaults, simply modify the global variables in the package `"smartlog/msg"`:
+To change the defaults, simply modify the global variables in the package `"github.com/KarelKubat/smartlog/msg"`:
 
 ```go
 import (
   "time"
-  "smartlog/client"
-  "smartlog/msg"
+  "github.com/KarelKubat/smartlog/client"
+  "github.com/KarelKubat/smartlog/msg"
 )    
 // ...
 msg.DefaultTimeFormat = time.RFC3339 // format: "2006-01-02T15:04:05Z07:00"
@@ -253,7 +253,7 @@ The default timestamp format `msg.DefaultTimeFormat` applies to all clients that
 // See also main/test/clienttimestamps/clienttimestamps.go
 import (
   "time"
-  "smartlog/client/any"
+  "github.com/KarelKubat/smartlog/client/any"
 )
 ... 
 cl1, err := any.New("file://file1.log")
@@ -269,11 +269,11 @@ cl2.Info("hello world from client #2")  // 2021-12-05T12:31:00+01:00 | I | hello
 
 ### Stored messages in HTTP clients
 
-HTTP clients store a limited number of messages. The oldest ones are discarded when new messages arrive and the limit is reached. The limit value is the variable `KeepMessages` in the package "smartlog/client/http". To change this value:
+HTTP clients store a limited number of messages. The oldest ones are discarded when new messages arrive and the limit is reached. The limit value is the variable `KeepMessages` in the package "github.com/KarelKubat/smartlog/client/http". To change this value:
 
 ```go
 import (
-  "smartlog/client/http"
+  "github.com/KarelKubat/smartlog/client/http"
 )
 ...
 http.KeepMessages = 10000 // store a lot of messages
@@ -303,7 +303,7 @@ The actual numbers can be found in `client/client.go`. If you need to adjust the
 ```go
 import (
   "time"
-  "smartlog/client"
+  "github.com/KarelKubat/smartlog/client"
 )
 ...
 client.RestartAttempts = 5                // try 5 times

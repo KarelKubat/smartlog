@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 func TestDebugLevels(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"smartlog/client/any"
+	"github.com/KarelKubat/smartlog/client/any"
 
-	"smartlog/server"
+	"github.com/KarelKubat/smartlog/server"
 )
 
 const (

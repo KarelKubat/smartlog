@@ -4,8 +4,8 @@ import (
 	h "net/http"
 	"strings"
 
-	"smartlog/client"
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/client"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 var KeepMessages = 1024 // # of messages to keep for viewing)

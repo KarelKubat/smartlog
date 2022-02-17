@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"smartlog/client"
+	"github.com/KarelKubat/smartlog/client"
 )
 
 func TestWrite(t *testing.T) {

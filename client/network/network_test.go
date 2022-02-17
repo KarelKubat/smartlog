@@ -3,7 +3,7 @@ package network
 import (
 	"testing"
 
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 // Test that connection errors are bubbled up. Not much else that we can do.

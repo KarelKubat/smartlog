@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 func TestNew(t *testing.T) {

@@ -2,12 +2,12 @@ package any
 
 import (
 	"errors"
-	"smartlog/client"
-	"smartlog/client/file"
-	"smartlog/client/http"
-	"smartlog/client/network"
-	"smartlog/client/none"
-	"smartlog/uri"
+	"github.com/KarelKubat/smartlog/client"
+	"github.com/KarelKubat/smartlog/client/file"
+	"github.com/KarelKubat/smartlog/client/http"
+	"github.com/KarelKubat/smartlog/client/network"
+	"github.com/KarelKubat/smartlog/client/none"
+	"github.com/KarelKubat/smartlog/uri"
 )
 
 func New(u string) (*client.Client, error) {

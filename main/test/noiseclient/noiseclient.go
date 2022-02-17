@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"smartlog/client"
-	"smartlog/client/any"
+	"github.com/KarelKubat/smartlog/client"
+	"github.com/KarelKubat/smartlog/client/any"
 )
 
 // Test msg containing newlines and empty lines

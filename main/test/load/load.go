@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"smartlog/client"
-	"smartlog/client/any"
-	"smartlog/server"
+	"github.com/KarelKubat/smartlog/client"
+	"github.com/KarelKubat/smartlog/client/any"
+	"github.com/KarelKubat/smartlog/server"
 )
 
 var (

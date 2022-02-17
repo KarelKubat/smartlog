@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"smartlog/client/any"
+	"github.com/KarelKubat/smartlog/client/any"
 )
 
 func main() {
