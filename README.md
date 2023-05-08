@@ -1,6 +1,20 @@
 # Smartlog
 
 <!-- toc -->
+- [Concepts](#concepts)
+  - [Emitting messages from your Go program](#emitting-messages-from-your-go-program)
+  - [Client types](#client-types)
+  - [Smartlog servers need smartlog clients too](#smartlog-servers-need-smartlog-clients-too)
+- [The client code](#the-client-code)
+  - [Overview of message-generating methods](#overview-of-message-generating-methods)
+  - [The default (global) client and non-global clients](#the-default-global-client-and-non-global-clients)
+  - [Controlling whether Debug() and Debugf() generate messages](#controlling-whether-debug-and-debugf-generate-messages)
+  - [The any client and URIs](#the-any-client-and-uris)
+- [Server Code](#server-code)
+- [Tweaks](#tweaks)
+  - [Timestamps](#timestamps)
+  - [Stored messages in HTTP clients](#stored-messages-in-http-clients)
+  - [Finding dropped network links](#finding-dropped-network-links)
 <!-- /toc -->
 
 Smartlog is a yet-another-package for Go to make logging easier. (Well, easier for me, it's the way I like it.) Log statements can be processed locally (to `stdout` or a file), made visible in a webpage, or sent remotely to a server over TCP or UDP for further handling.
